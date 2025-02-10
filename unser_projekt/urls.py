@@ -16,13 +16,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from meine_app import views
 from iot_projekt import views
-from grusskarte import views as grusskarte
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('meine_app.urls')),
-    path('grusskarte/', grusskarte.index),
     path('iot_projekt/', include('iot_projekt.urls')),
 ]
