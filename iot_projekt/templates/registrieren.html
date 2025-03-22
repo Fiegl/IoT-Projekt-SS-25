@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        {% load static %}
+        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+        <title>Desk-Share-Lock</title>
+        <style>
+            .container {
+                padding: 10px;
+                margin: 10px auto;
+                border-style: groove;
+                border-radius: 6px;
+                width: 300px;
+                height: 300px;
+            }
+        </style>
+    </head>
+    <body class="start">
+        <img src="{% static 'images/desksharelock.jpg' %}" alt="Logo" id="desksharelock">
+        <h1>Desk-Share-Lock</h1>   
+        <form>
+            <div class="container">
+                <h2>Registrierung</h2>
+                <label for="username">Benutzername</label><br>
+                <input type="text"></input><br><br>
+                <label for="matrikelnummer">Matrikelnummer</label><br>
+                <input type="text"></input><br><br>
+                <label for="passwort">Passwort</label><br>
+                <input type="password"></input><br><br>
+                <button type="submit">Registrieren</button>
+                <button type="button" onclick="history.back()">Zurück</button>
+                
+            </div>
+        </form>
+    </body>
+</html>
