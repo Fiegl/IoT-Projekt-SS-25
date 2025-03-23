@@ -7,6 +7,11 @@ from django.http import HttpResponse
 
 registrierte_benutzer = "/var/www/django-project/datenbank/users.json" 
 
+def start(request):
+    return render(request, 'start.html')
 
-def home(request):
-    return HttpResponse("Willkommen auf der Startseite!")
+def registrieren(request):
+    return render(request, 'registrieren.html')
+
+def hauptseite(request):
+    return render(request, 'mainpage.html')
