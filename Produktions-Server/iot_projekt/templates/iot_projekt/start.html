@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+       
+        <link rel="stylesheet" href="{% static 'styles.css' %}">
+        <title>Desk-Share-Lock</title>
+        <style>
+            .container {
+                padding: 10px;
+                margin: 10px auto;
+                border-style: groove;
+                border-radius: 6px;
+                width: 300px;
+                height: 300px;
+            }
+
+        </style>
+    </head>
+    <body class="start">
+        <img src="{% static 'desksharelock.jpg' %}" alt="Logo" id="desksharelock">
+        <h1>Desk-Share-Lock</h1>   
+        <form method="POST">
+            {% csrf_token %}
+            <div class="container">
+                <h2>Einloggen</h2>
+                <label for="username">Benutzername</label><br>
+                <input type="text" name="username"></input><br><br>
+                <label for="passwort">Passwort</label><br>
+                <input type="password" name="passwort"></input><br><br>
+                <button type="submit">Einloggen</button>
+                <p>Noch nicht registriert?</p>
+                <a href="{% url 'registrieren' %}">Hier registrieren!</a>
+                <p><a href="{% url 'passwort_vergessen' %}">Passwort vergessen?</a></p>
+            </div>
+        </form>
+    </body>
+</html>
