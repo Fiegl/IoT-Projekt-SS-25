@@ -9,6 +9,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth import logout
 from django.core.mail import send_mail #wird für Passwort zurücksetzen benötigt
 from functools import wraps #wird für den Decorator benötigt
+from django.views.decorators.cache import never_cache #verhindert den Cache
 
 # Pfad zu den JSON-Datenbanken
 
@@ -26,25 +27,8 @@ def login_required(view_func):
     return wrapper
 
 #Hier sind die Funktionen für die Registrierung und das Ein- und Ausloggen
-def start(request):
-    if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("passwort")
 
-        with open(registrierte_benutzer, "r") as file:
-            data = json.load(file)
-
-        for user in data["users"]:
-            if user["username"] == username and check_password(password, user["password"]):
-                request.session["username"] = username
-                return redirect("hauptseite")
-        return HttpResponse("Login fehlgeschlagen")
-    
-    return render(request, 'iot_projekt/start.html')
-
-
-
-
+@never_cache
 def registrieren(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -73,6 +57,32 @@ def registrieren(request):
         return redirect("start")
 
     return render(request, 'iot_projekt/registrieren.html')
+
+@never_cache
+def start(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("passwort")
+
+        with open(registrierte_benutzer, "r") as file:
+            data = json.load(file)
+
+        for user in data["users"]:
+            if user["username"] == username and check_password(password, user["password"]):
+                request.session["username"] = username
+                return redirect("hauptseite")
+        return HttpResponse("Login fehlgeschlagen")
+    
+    return render(request, 'iot_projekt/start.html')
+
+@never_cache
+@login_required
+def logout_view(request):
+    logout(request)
+    request.session.flush()
+    return redirect("start")
+
+
 
 
 #Hier sind die Funktionen für das Passwort zurücksetzen (SMTP GMAIL, siehe settings.py)
@@ -154,14 +164,8 @@ def passwort_zuruecksetzen(request, token):
     return render(request, 'iot_projekt/passwort_zuruecksetzen.html', {"token": token})
 
 
-
-
-
-
-
-
-
 #Hier die Funktion für die MainPage
+@never_cache
 @login_required
 def hauptseite(request):
     return render(request, 'iot_projekt/mainpage.html')
