@@ -49,3 +49,8 @@ body.mainpage {
     bottom: 0px;
     object-fit: contain;
 }
+.logout-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
