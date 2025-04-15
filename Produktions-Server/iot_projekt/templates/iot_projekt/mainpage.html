@@ -9,6 +9,10 @@
         </style>
     </head>
     <body class="mainpage">
+        <form action="{% url 'logout' %}" method="post" class="logout-form">
+            {% csrf_token %}
+            <button type="submit" class="logout-button">Ausloggen</button>
+        </form> 
         <img src="{% static 'desksharelock.jpg' %}" alt="Logo" id="desksharelock">
         <h1>Desk-Share-Lock</h1><br><br>
         <h3>Hier können Sie einen freien Arbeitsplatz auswählen</h3>
