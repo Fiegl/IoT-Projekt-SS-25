@@ -31,7 +31,9 @@
                 <button type="submit">Einloggen</button>
                 <p>Noch nicht registriert?</p>
                 <a href="{% url 'registrieren' %}">Hier registrieren!</a>
+                {% comment %}
                 <p><a href="{% url 'passwort_vergessen' %}">Passwort vergessen?</a></p>
+                {% endcomment %}
             </div>
         </form>
     </body>
