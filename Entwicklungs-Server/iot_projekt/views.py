@@ -1,22 +1,71 @@
+import json
+import uuid
 from django.shortcuts import render, redirect
-from django.views import View
+from django.http import JsonResponse
 from django.http import HttpResponse
+from django.views import View
+from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth import logout
-
 
 #Pfade zu den JSON-Dateien
 
-registrierte_benutzer = "/var/www/django-project/datenbank/users.json" 
+registrierte_benutzer = "C:\\Users\\Besitzer\\django-project\\datenbank\\users.json"
+arbeitsplaetze = "C:\\Users\\Besitzer\\django-project\\arbeitsplaetze.json"
 
-def start(request):
-    return render(request, 'start.html')
 
 def registrieren(request):
-    return render(request, 'registrieren.html')
+    if request.method == "POST":
+        username = request.POST.get("username")
+        email = request.POST.get("email")
+        matrikelnummer = request.POST.get("matrikelnummer")
+        password = request.POST.get("passwort")
 
-def hauptseite(request):
-    return render(request, 'mainpage.html')
+        password_hash = make_password(password)
+
+
+        with open(registrierte_benutzer, "r") as file:
+            data = json.load(file)
+
+        new_user = {
+            "username": username,
+            "email": email,
+            "matrikelnummer": matrikelnummer,
+            "password": password_hash
+        }
+
+        data["users"].append(new_user)
+
+        with open(registrierte_benutzer, "w") as file:
+            json.dump(data, file, indent=4)
+
+        return redirect("start")
+
+    return render(request, 'iot_projekt/registrieren.html')
+
+
+def start(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("passwort")
+
+        with open(registrierte_benutzer, "r") as file:
+            data = json.load(file)
+
+        for user in data["users"]:
+            if user["username"] == username and check_password(password, user["password"]):
+                request.session["username"] = username
+                return redirect("hauptseite")
+        return HttpResponse("Login fehlgeschlagen")
+    
+    return render(request, 'iot_projekt/start.html')
+
 
 def logout_view(request):
     logout(request)
+    request.session.flush()
     return redirect("start")
+
+
+def hauptseite(request):
+    return render(request, 'iot_projekt/mainpage.html')
+
