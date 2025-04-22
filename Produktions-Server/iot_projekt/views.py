@@ -15,6 +15,7 @@ from django.views.decorators.cache import never_cache #verhindert den Cache
 
 registrierte_benutzer = "/var/www/django-project/datenbank/users.json"
 reset_tokens = "/var/www/django-project/datenbank/reset_tokens.json"
+arbeitsplaetze = "/var/www/django-project/datenbank/arbeitsplaetze.json"
 
 
 #Hier ist die Funktion für den Decorator
@@ -168,6 +169,8 @@ def passwort_zuruecksetzen(request, token):
 @never_cache
 @login_required
 def hauptseite(request):
+    if "username" not in request.session:
+        return redirect("start")
     return render(request, 'iot_projekt/mainpage.html')
 
 
