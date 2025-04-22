@@ -20,17 +20,18 @@ def registrieren(request):
         matrikelnummer = request.POST.get("matrikelnummer")
         password = request.POST.get("passwort")
 
-        password_hash = make_password(password)
-
-
         with open(registrierte_benutzer, "r") as file:
             data = json.load(file)
 
+        if any(user["username"] == username for user in data["users"]):
+            return HttpResponse("Benutzername bereits vergeben.")
+
         new_user = {
+            "id": str(uuid.uuid4()),
             "username": username,
             "email": email,
             "matrikelnummer": matrikelnummer,
-            "password": password_hash
+            "password": make_password(password)
         }
 
         data["users"].append(new_user)
@@ -55,8 +56,9 @@ def start(request):
             if user["username"] == username and check_password(password, user["password"]):
                 request.session["username"] = username
                 return redirect("hauptseite")
+
         return HttpResponse("Login fehlgeschlagen")
-    
+
     return render(request, 'iot_projekt/start.html')
 
 
@@ -67,5 +69,7 @@ def logout_view(request):
 
 
 def hauptseite(request):
+    if "username" not in request.session:
+        return redirect("start")
     return render(request, 'iot_projekt/mainpage.html')
 
