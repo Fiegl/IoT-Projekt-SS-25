@@ -1,8 +1,8 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
     <head>
-        {% load static %}
-        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+        <link rel="stylesheet" href="{% static 'styles.css' %}">
         <title>Desk-Share-Lock</title>
         <style>
 
@@ -13,7 +13,7 @@
             {% csrf_token %}
             <button type="submit" class="logout-button">Ausloggen</button>
         </form> 
-        <img src="{% static 'images/desksharelock.jpg' %}" alt="Logo" id="desksharelock">
+        <img src="{% static 'desksharelock.jpg' %}" alt="Logo" id="desksharelock">
         <h1>Desk-Share-Lock</h1><br><br>
         <h3>Hier können Sie einen freien Arbeitsplatz auswählen</h3>
         <div class="arbeitsplatz-container">
