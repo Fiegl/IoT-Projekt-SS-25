@@ -1,0 +1,11 @@
+{
+  "arbeitsplaetze": [
+    {
+      "id": "desk-01",
+      "name": "Arbeitsplatz 1",
+      "status": "deaktiviert",
+      "gpio_pin": 17,
+      "user_id": null
+    }
+  ]
+}
