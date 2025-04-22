@@ -1,11 +1,11 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
     <head>
-        {% load static %}
-        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+       
+        <link rel="stylesheet" href="{% static 'styles.css' %}">
         <title>Desk-Share-Lock</title>
         <style>
-            
             .container {
                 padding: 10px;
                 margin: 10px auto;
@@ -18,18 +18,20 @@
         </style>
     </head>
     <body class="start">
-        <img src="{% static 'images/desksharelock.jpg' %}" alt="Logo" id="desksharelock">
+        <img src="{% static 'desksharelock.jpg' %}" alt="Logo" id="desksharelock">
         <h1>Desk-Share-Lock</h1>   
-        <form>
+        <form method="POST">
+            {% csrf_token %}
             <div class="container">
                 <h2>Einloggen</h2>
                 <label for="username">Benutzername</label><br>
-                <input type="text"></input><br><br>
+                <input type="text" name="username"></input><br><br>
                 <label for="passwort">Passwort</label><br>
-                <input type="password"></input><br><br>
+                <input type="password" name="passwort"></input><br><br>
                 <button type="submit">Einloggen</button>
                 <p>Noch nicht registriert?</p>
-                <a href="http://127.0.0.1:8001/registrieren/">Hier registrieren!</a>
+                <a href="{% url 'registrieren' %}">Hier registrieren!</a>
+                <p><a href="{% url 'passwort_vergessen' %}">Passwort vergessen?</a></p>
             </div>
         </form>
     </body>
