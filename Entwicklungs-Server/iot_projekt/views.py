@@ -1,17 +1,15 @@
 import json
 import uuid
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
-from django.http import HttpResponse
+from django.http import JsonResponse, HttpResponse
 from django.views import View
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
 
-#Pfade zu den JSON-Dateien
-
+# Pfade zu den JSON-Dateien
 registrierte_benutzer = "C:\\Users\\Besitzer\\django-project\\datenbank\\users.json"
-arbeitsplaetze = "C:\\Users\\Besitzer\\django-project\\arbeitsplaetze.json"
-
+arbeitsplaetze = "C:\\Users\\Besitzer\\django-project\\datenbank\\arbeitsplaetze.json"
 
 def registrieren(request):
     if request.method == "POST":
@@ -41,7 +39,6 @@ def registrieren(request):
 
     return render(request, 'iot_projekt/registrieren.html')
 
-
 def start(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -53,34 +50,31 @@ def start(request):
         for user in data["users"]:
             if user["username"] == username and check_password(password, user["password"]):
                 request.session["username"] = username
+                request.session["user_id"] = user["id"]  # Wichtig, damit wir später den Benutzer in Buchung kennen
                 return redirect("hauptseite")
 
         return HttpResponse("Login fehlgeschlagen")
 
     return render(request, 'iot_projekt/start.html')
 
-
 def logout_view(request):
     logout(request)
     request.session.flush()
     return redirect("start")
 
-
+@login_required
 def hauptseite(request):
-    if "username" not in request.session:
-        return redirect("start")
+    with open(arbeitsplaetze, "r") as file:
+        arbeitsplaetze_data = json.load(file)["arbeitsplaetze"]
 
-    with open("/var/www/django-project/datenbank/arbeitsplaetze.json", "r") as file:
-        arbeitsplaetze = json.load(file)["arbeitsplaetze"]
+    return render(request, 'iot_projekt/mainpage.html', {"arbeitsplaetze": arbeitsplaetze_data})
 
-    return render(request, 'iot_projekt/mainpage.html', {"arbeitsplaetze": arbeitsplaetze})
-
-
+@login_required
 def arbeitsplatz_buchen(request):
     if request.method == "POST":
         desk_id = request.POST.get("desk_id")
 
-        with open(arbeitsplaetze_pfad, "r") as f:
+        with open(arbeitsplaetze, "r") as f:
             data = json.load(f)
 
         desk = None
@@ -91,11 +85,12 @@ def arbeitsplatz_buchen(request):
 
         if desk and desk["status"] == "frei":
             desk["status"] = "belegt"
+            desk["user_id"] = request.session.get("user_id")  # Benutzer-ID eintragen
 
-            with open(arbeitsplaetze_pfad, "w") as f:
+            with open(arbeitsplaetze, "w") as f:
                 json.dump(data, f, indent=4)
 
         return redirect("hauptseite")
-    else:
-        return redirect("hauptseite")
+
+    return redirect("hauptseite")
 
