@@ -69,5 +69,33 @@ def logout_view(request):
 def hauptseite(request):
     if "username" not in request.session:
         return redirect("start")
-    return render(request, 'iot_projekt/mainpage.html')
+
+    with open("/var/www/django-project/datenbank/arbeitsplaetze.json", "r") as file:
+        arbeitsplaetze = json.load(file)["arbeitsplaetze"]
+
+    return render(request, 'iot_projekt/mainpage.html', {"arbeitsplaetze": arbeitsplaetze})
+
+
+def arbeitsplatz_buchen(request):
+    if request.method == "POST":
+        desk_id = request.POST.get("desk_id")
+
+        # JSON-Datenbank laden
+        with open(arbeitsplaetze_pfad, "r") as f:
+            data = json.load(f)
+
+        # Arbeitsplatz finden
+        desk = next((d for d in data["arbeitsplaetze"] if d["id"] == desk_id), None)
+
+        if desk and desk["status"] == "frei":
+            desk["status"] = "belegt"
+            # später könntest du hier GPIO ansteuern
+
+            # JSON speichern
+            with open(arbeitsplaetze_pfad, "w") as f:
+                json.dump(data, f, indent=4)
+
+        return redirect("hauptseite")
+    else:
+        return redirect("hauptseite")
 
