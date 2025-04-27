@@ -17,7 +17,6 @@ def registrieren(request):
     if request.method == "POST":
         username = request.POST.get("username")
         email = request.POST.get("email")
-        matrikelnummer = request.POST.get("matrikelnummer")
         password = request.POST.get("passwort")
 
         with open(registrierte_benutzer, "r") as file:
@@ -30,7 +29,6 @@ def registrieren(request):
             "id": str(uuid.uuid4()),
             "username": username,
             "email": email,
-            "matrikelnummer": matrikelnummer,
             "password": make_password(password)
         }
 
