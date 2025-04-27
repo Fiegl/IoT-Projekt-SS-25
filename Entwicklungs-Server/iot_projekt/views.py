@@ -62,14 +62,14 @@ def logout_view(request):
     request.session.flush()
     return redirect("start")
 
-@login_required
+
 def hauptseite(request):
     with open(arbeitsplaetze, "r") as file:
         arbeitsplaetze_data = json.load(file)["arbeitsplaetze"]
 
     return render(request, 'iot_projekt/mainpage.html', {"arbeitsplaetze": arbeitsplaetze_data})
 
-@login_required
+
 def arbeitsplatz_buchen(request):
     if request.method == "POST":
         desk_id = request.POST.get("desk_id")
