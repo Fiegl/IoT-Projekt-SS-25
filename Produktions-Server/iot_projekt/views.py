@@ -34,7 +34,6 @@ def registrieren(request):
     if request.method == "POST":
         username = request.POST.get("username")
         email = request.POST.get("email")
-        matrikelnummer = request.POST.get("matrikelnummer")
         password = request.POST.get("passwort")
 
         password_hash = make_password(password)
@@ -46,7 +45,6 @@ def registrieren(request):
         new_user = {
             "username": username,
             "email": email,
-            "matrikelnummer": matrikelnummer,
             "password": password_hash
         }
 
