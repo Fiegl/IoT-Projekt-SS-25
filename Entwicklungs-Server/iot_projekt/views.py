@@ -78,9 +78,17 @@ def arbeitsplatz_buchen(request):
         with open(arbeitsplaetze, "r") as file:
             data = json.load(file)
 
+def arbeitsplatz_buchen(request):
+    if request.method == "POST":
+        desk_id = request.POST.get("desk_id")
+
+        # JSON öffnen und Arbeitsplätze laden
+        with open(arbeitsplaetze, "r") as datei:
+            daten = json.load(datei)
+
         # Arbeitsplatz suchen
         desk = None
-        for arbeitsplatz in data["arbeitsplaetze"]:
+        for arbeitsplatz in daten["arbeitsplaetze"]:
             if arbeitsplatz["id"] == desk_id:
                 desk = arbeitsplatz
                 break
@@ -93,8 +101,8 @@ def arbeitsplatz_buchen(request):
                 desk["user_id"] = request.session.get("user_id")
 
                 # JSON speichern, nur wenn Änderung gemacht wurde!
-                with open(arbeitsplaetze, "w") as file:
-                    json.dump(data, file, indent=4)
+                with open(arbeitsplaetze, "w") as datei:
+                    json.dump(daten, datei, indent=4)
         else:
             # Arbeitsplatz wurde nicht gefunden
             pass  # (könnte man später verbessern, z.B. Fehlermeldung anzeigen)
@@ -103,5 +111,6 @@ def arbeitsplatz_buchen(request):
 
     # Falls kein POST, auch auf Hauptseite weiterleiten
     return redirect("hauptseite")
+
 
 
