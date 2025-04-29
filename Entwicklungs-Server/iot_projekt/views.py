@@ -74,23 +74,34 @@ def arbeitsplatz_buchen(request):
     if request.method == "POST":
         desk_id = request.POST.get("desk_id")
 
-        with open(arbeitsplaetze, "r") as f:
-            data = json.load(f)
+        # JSON öffnen und Daten laden
+        with open(arbeitsplaetze, "r") as file:
+            data = json.load(file)
 
+        # Arbeitsplatz suchen
         desk = None
         for arbeitsplatz in data["arbeitsplaetze"]:
             if arbeitsplatz["id"] == desk_id:
                 desk = arbeitsplatz
                 break
 
-        if desk and desk["status"] == "frei":
-            desk["status"] = "belegt"
-            desk["user_id"] = request.session.get("user_id")  # Benutzer-ID eintragen
+        if desk is not None:
+            # Arbeitsplatz existiert
+            if desk["status"] == "frei":
+                # Arbeitsplatz ist frei → Buchen erlaubt
+                desk["status"] = "belegt"
+                desk["user_id"] = request.session.get("user_id")
 
-            with open(arbeitsplaetze, "w") as f:
-                json.dump(data, f, indent=4)
+                # JSON speichern, nur wenn Änderung gemacht wurde!
+                with open(arbeitsplaetze, "w") as file:
+                    json.dump(data, file, indent=4)
+        else:
+            # Arbeitsplatz wurde nicht gefunden
+            pass  # (könnte man später verbessern, z.B. Fehlermeldung anzeigen)
 
         return redirect("hauptseite")
 
+    # Falls kein POST, auch auf Hauptseite weiterleiten
     return redirect("hauptseite")
+
 
