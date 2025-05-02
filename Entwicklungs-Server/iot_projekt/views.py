@@ -74,14 +74,6 @@ def arbeitsplatz_buchen(request):
     if request.method == "POST":
         desk_id = request.POST.get("desk_id")
 
-        # JSON öffnen und Daten laden
-        with open(arbeitsplaetze, "r") as file:
-            data = json.load(file)
-
-def arbeitsplatz_buchen(request):
-    if request.method == "POST":
-        desk_id = request.POST.get("desk_id")
-
         # JSON öffnen und Arbeitsplätze laden
         with open(arbeitsplaetze, "r") as datei:
             daten = json.load(datei)
