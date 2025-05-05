@@ -39,5 +39,13 @@
                 </details>
             {% endif %}
         {% endfor %}
+    </div>
 
-        <!-- hier kommt der Code für Arbeitsplatz 2 -->
+       <!-- hier kommt der Code für Arbeitsplatz 2 -->
+
+
+</body>
+</html>
+    
+
+     
