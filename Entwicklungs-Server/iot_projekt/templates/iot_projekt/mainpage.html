@@ -1,70 +1,48 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
-    <head>
-        <link rel="stylesheet" href="{% static 'styles.css' %}">
-        <title>Desk-Share-Lock</title>
-        <style>
+<head>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <title>Desk-Share-Lock</title>
+</head>
+<body class="mainpage">
+    <form action="{% url 'logout' %}" method="post" class="logout-form">
+        {% csrf_token %}
+        <button type="submit" class="logout-button">Ausloggen</button>
+    </form>        
 
-        </style>
-    </head>
-    <body class="mainpage">
-        <form action="{% url 'logout' %}" method="post" class="logout-form">
-            {% csrf_token %}
-            <button type="submit" class="logout-button">Ausloggen</button>
-        </form> 
-        <img src="{% static 'desksharelock.jpg' %}" alt="Logo" id="desksharelock">
-        <h1>Desk-Share-Lock</h1><br><br>
-        <h3>Hier können Sie einen freien Arbeitsplatz auswählen</h3>
-        <div class="arbeitsplatz-container">
-            <button class="arbeitsplatz-btn">
-                <img src="{% static 'images/StempelGruen.webp' %}" class="stempelgruen" alt="StempelGruen">
-                Arbeitsplatz 1
-            </button>
-            <button class="arbeitsplatz-btn">
-                <img src="{% static 'images/StempelGruen.webp' %}" class="stempelgruen" alt="StempelGruen">
-                Arbeitsplatz 2
-            </button>
-            <button class="arbeitsplatz-btn">
-                <img src="{% static 'images/StempelGruen.webp' %}" class="stempelgruen" alt="StempelGruen">
-                Arbeitsplatz 3
-            </button>
-            <button class="arbeitsplatz-btn">
-                <img src="{% static 'images/StempelGruen.webp' %}" class="stempelgruen" alt="StempelGruen">
-                Arbeitsplatz 4
-            </button>
-            <button class="arbeitsplatz-btn">
-                <img src="{% static 'images/StempelGruen.webp' %}" class="stempelgruen" alt="StempelGruen">
-                Arbeitsplatz 5
-            </button>
-            <button class="arbeitsplatz-btn">
-                <img src="{% static 'images/StempelGruen.webp' %}" class="stempelgruen" alt="StempelGruen">
-                Arbeitsplatz 6
-            </button>
-            <button class="arbeitsplatz-btn">
-                <img src="{% static 'images/StempelGruen.webp' %}" class="stempelgruen" alt="StempelGruen">
-                Arbeitsplatz 7
-            </button>
-            <button class="arbeitsplatz-btn">
-                <img src="{% static 'images/StempelGruen.webp' %}" class="stempelgruen" alt="StempelGruen">
-                Arbeitsplatz 8
-            </button>
-            <button class="arbeitsplatz-btn">
-                <img src="{% static 'images/StempelGruen.webp' %}" class="stempelgruen" alt="StempelGruen">
-                Arbeitsplatz 9
-            </button>
-            <button class="arbeitsplatz-btn">
-                <img src="{% static 'images/StempelGruen.webp' %}" class="stempelgruen" alt="StempelGruen">
-                Arbeitsplatz 10
-            </button>
-            <button class="arbeitsplatz-btn">
-                <img src="{% static 'images/StempelGruen.webp' %}" class="stempelgruen" alt="StempelGruen">
-                Arbeitsplatz 11
-            </button>
-            <button class="arbeitsplatz-btn">
-                <img src="{% static 'images/StempelGruen.webp' %}" class="stempelgruen" alt="StempelGruen">
-                Arbeitsplatz 12
-            </button>
-        </div>
-    </body>
+    <img src="{% static 'images/desksharelock.jpg' %}" alt="Logo" id="desksharelock">
+    <h1>Desk-Share-Lock</h1><br><br>
+    <h3>Hier können Sie einen freien Arbeitsplatz auswählen</h3>
+
+    <div class="arbeitsplatz-container">
+
+        <!-- hier kommt der Code für Arbeitsplatz 1 -->
+        {% for ap in arbeitsplaetze %}
+            {% if ap.id == "desk-01" %}
+                <details class="arbeitsplatz-details">
+                    <summary class="arbeitsplatz-btn">Arbeitsplatz 1</summary>
+                    {% if ap.status == "frei" %}
+                        <p>Status: Frei</p>
+                        <form method="post" action="{% url 'arbeitsplatz_buchen' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="desk_id" value="desk-01">
+                            <button type="submit">Belegen</button>
+                        </form>
+                    {% elif ap.status == "belegt" %}
+                        <p>Status: Belegt</p>
+                        <p>Benutzer: {{ ap.user_id }}</p>
+                    {% elif ap.status == "deaktiviert" %}
+                        <p>Status: Deaktiviert</p>
+                        <p>Dieser Platz ist aktuell nicht verfügbar.</p>
+                    {% endif %}
+                </details>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+       <!-- hier kommt der Code für Arbeitsplatz 2 -->
+
+
+</body>
 </html>
