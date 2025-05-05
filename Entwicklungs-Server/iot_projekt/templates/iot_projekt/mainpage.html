@@ -1,11 +1,15 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
+
+
 <head>
     <meta charset="UTF-8">
     <title>Desk-Share-Lock</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
+
+
 <body class="mainpage">
 
     <form action="{% url 'logout' %}" method="post" class="logout-form">
@@ -34,6 +38,14 @@
                 {% elif arbeitsplatz.status == "belegt" %}
                     <p>Status: Belegt</p>
                     <p>Benutzer: {{ arbeitsplatz.user_id }}</p>
+                
+                    {% if arbeitsplatz.user_id == user_id %}
+                        <form method="post" action="{% url 'arbeitsplatz_abmelden' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="desk_id" value="{{ arbeitsplatz.id }}">
+                            <button type="submit">Abmelden</button>
+                        </form>
+                    {% endif %}
 
                 {% elif arbeitsplatz.status == "deaktiviert" %}
                     <p>Status: Deaktiviert</p>
@@ -43,6 +55,9 @@
         {% endfor %}
 
     </div>
+
 </body>
+
+
 </html>
 
