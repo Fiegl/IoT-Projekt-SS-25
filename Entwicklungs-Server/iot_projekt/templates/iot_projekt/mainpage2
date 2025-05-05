@@ -1,44 +1,43 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
-    <head>
-        {% load static %}
-        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-        <title>Desk-Share-Lock</title>
-        <style>
+<head>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <title>Desk-Share-Lock</title>
+</head>
+<body class="mainpage">
+    <form action="{% url 'logout' %}" method="post" class="logout-form">
+        {% csrf_token %}
+        <button type="submit" class="logout-button">Ausloggen</button>
+    </form>        
 
-        </style>
-    </head>
-    <body class="mainpage">
-        <form action="{% url 'logout' %}" method="post" class="logout-form">
-            {% csrf_token %}
-            <button type="submit" class="logout-button">Ausloggen</button>
-        </form>        
-        <img src="{% static 'images/desksharelock.jpg' %}" alt="Logo" id="desksharelock">
-        <h1>Desk-Share-Lock</h1><br><br>
-        <h3>Hier können Sie einen freien Arbeitsplatz auswählen</h3>
-        <div class="arbeitsplatz-container">
-            <details>
-                <summary class="arbeitsplatz-btn">{{ arbeitsplatz.name }}</summary>
+    <img src="{% static 'images/desksharelock.jpg' %}" alt="Logo" id="desksharelock">
+    <h1>Desk-Share-Lock</h1><br><br>
+    <h3>Hier können Sie einen freien Arbeitsplatz auswählen</h3>
 
-                {% if arbeitsplatz.status == "frei" %}
-                  <p>Status: Frei</p>
-                  <form method="post" action="{% url 'belegen' arbeitsplatz.id %}">
-                    {% csrf_token %}
-                    <input type="time" name="startzeit">
-                    <button type="submit">Belegen</button>
-                  </form>
-              
-                {% elif arbeitsplatz.status == "belegt" %}
-                  <p>Status: Belegt</p>
-                  <p>Benutzer: {{ arbeitsplatz.user }}</p>
-                  <p>Startzeit: {{ arbeitsplatz.startzeit }}</p>
-              
-                {% elif arbeitsplatz.status == "deaktiviert" %}
-                  <p>Status: Deaktiviert</p>
-                  <p>Dieser Platz ist aktuell nicht verfügbar.</p>
-                {% endif %}
-            </details>
+    <div class="arbeitsplatz-container">
 
-        </div>
-    </body>
-</html>
+        <!-- hier kommt der Code für Arbeitsplatz 1 -->
+        {% for ap in arbeitsplaetze %}
+            {% if ap.id == "desk-01" %}
+                <details class="arbeitsplatz-details">
+                    <summary class="arbeitsplatz-btn">Arbeitsplatz 1</summary>
+                    {% if ap.status == "frei" %}
+                        <p>Status: Frei</p>
+                        <form method="post" action="{% url 'arbeitsplatz_buchen' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="desk_id" value="desk-01">
+                            <button type="submit">Belegen</button>
+                        </form>
+                    {% elif ap.status == "belegt" %}
+                        <p>Status: Belegt</p>
+                        <p>Benutzer: {{ ap.user_id }}</p>
+                    {% elif ap.status == "deaktiviert" %}
+                        <p>Status: Deaktiviert</p>
+                        <p>Dieser Platz ist aktuell nicht verfügbar.</p>
+                    {% endif %}
+                </details>
+            {% endif %}
+        {% endfor %}
+
+        <!-- hier kommt der Code für Arbeitsplatz 2 -->
