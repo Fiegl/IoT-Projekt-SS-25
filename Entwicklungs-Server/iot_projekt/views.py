@@ -62,8 +62,10 @@ def logout_view(request):
     request.session.flush()
     return redirect("start")
 
-
 def hauptseite(request):
+    if "username" not in request.session:
+        return redirect("start")
+
     with open(arbeitsplaetze, "r") as file:
         arbeitsplaetze_data = json.load(file)["arbeitsplaetze"]
 
