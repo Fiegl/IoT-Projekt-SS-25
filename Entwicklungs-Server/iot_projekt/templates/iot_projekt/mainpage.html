@@ -1,4 +1,4 @@
- {% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -19,32 +19,30 @@
 
     <div class="arbeitsplatz-container">
 
-        <!-- Code für Arbeitsplatz 1 -->
         {% for arbeitsplatz in arbeitsplaetze %}
-            {% if arbeitsplatz.id == "desk-01" %}
-                <details class="arbeitsplatz-details">
-                    <summary class="arbeitsplatz-btn">Arbeitsplatz 1</summary>
-                    {% if arbeitsplatz.status == "frei" %}
-                        <p>Status: Frei</p>
-                        <form method="post" action="{% url 'arbeitsplatz_buchen' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="desk_id" value="desk-01">
-                            <button type="submit">Belegen</button>
-                        </form>
-                    {% elif arbeitsplatz.status == "belegt" %}
-                        <p>Status: Belegt</p>
-                        <p>Benutzer: {{ arbeitsplatz.user_id }}</p>
-                    {% elif arbeitsplatz.status == "deaktiviert" %}
-                        <p>Status: Deaktiviert</p>
-                        <p>Dieser Platz ist aktuell nicht verfügbar.</p>
-                    {% endif %}
-                </details>
-            {% endif %}
-        {% endfor %}
-    
-        <!-- Code für Arbeitsplatz 2 -->
+            <details class="arbeitsplatz-details">
+                <summary class="arbeitsplatz-btn">{{ arbeitsplatz.name }}</summary>
 
-    
+                {% if arbeitsplatz.status == "frei" %}
+                    <p>Status: Frei</p>
+                    <form method="post" action="{% url 'arbeitsplatz_buchen' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="desk_id" value="{{ arbeitsplatz.id }}">
+                        <button type="submit">Belegen</button>
+                    </form>
+
+                {% elif arbeitsplatz.status == "belegt" %}
+                    <p>Status: Belegt</p>
+                    <p>Benutzer: {{ arbeitsplatz.user_id }}</p>
+
+                {% elif arbeitsplatz.status == "deaktiviert" %}
+                    <p>Status: Deaktiviert</p>
+                    <p>Dieser Platz ist aktuell nicht verfügbar.</p>
+                {% endif %}
+            </details>
+        {% endfor %}
+
     </div>
 </body>
 </html>
+
