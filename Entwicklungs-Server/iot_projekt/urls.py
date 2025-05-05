@@ -7,5 +7,7 @@ urlpatterns = [
     path('mainpage/', views.hauptseite, name='hauptseite'),
     path('logout/', views.logout_view, name='logout'),
     path('arbeitsplatz_buchen/', views.arbeitsplatz_buchen, name='arbeitsplatz_buchen'),
+    path('arbeitsplatz_abmelden/', views.arbeitsplatz_abmelden, name='arbeitsplatz_abmelden'),
 ]
+
 
