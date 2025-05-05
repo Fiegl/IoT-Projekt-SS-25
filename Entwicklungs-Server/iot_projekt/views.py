@@ -1,15 +1,15 @@
 import json
 import uuid
 from django.shortcuts import render, redirect
-from django.http import JsonResponse, HttpResponse
-from django.views import View
+from django.http import HttpResponse
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth import logout
-from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
 
-# Pfade zu den JSON-Dateien
+# Pfade zu JSON-Dateien
 registrierte_benutzer = "C:\\Users\\Besitzer\\django-project\\datenbank\\users.json"
 arbeitsplaetze = "C:\\Users\\Besitzer\\django-project\\datenbank\\arbeitsplaetze.json"
+
 
 def registrieren(request):
     if request.method == "POST":
@@ -39,6 +39,7 @@ def registrieren(request):
 
     return render(request, 'iot_projekt/registrieren.html')
 
+
 def start(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -50,17 +51,18 @@ def start(request):
         for user in data["users"]:
             if user["username"] == username and check_password(password, user["password"]):
                 request.session["username"] = username
-                request.session["user_id"] = user["id"]  # Wichtig, damit wir später den Benutzer in Buchung kennen
                 return redirect("hauptseite")
 
         return HttpResponse("Login fehlgeschlagen")
 
     return render(request, 'iot_projekt/start.html')
 
+
 def logout_view(request):
     logout(request)
     request.session.flush()
     return redirect("start")
+
 
 def hauptseite(request):
     if "username" not in request.session:
@@ -70,6 +72,7 @@ def hauptseite(request):
         arbeitsplaetze_data = json.load(file)["arbeitsplaetze"]
 
     return render(request, 'iot_projekt/mainpage.html', {"arbeitsplaetze": arbeitsplaetze_data})
+
 
 
 def arbeitsplatz_buchen(request):
@@ -105,6 +108,5 @@ def arbeitsplatz_buchen(request):
 
     # Falls kein POST, auch auf Hauptseite weiterleiten
     return redirect("hauptseite")
-
 
 
