@@ -6,7 +6,9 @@
 
 ## Frontend
 
+Zu Beginn wurde ein Konzept entwickelt. Wir entschieden uns, das Programm „Desk-Share-Lock“ zu nennen und das Frontend-Design thematisch an „Sherlock Holmes“ und die Epoche der Romanhandlung anzulehnen. Anschließend wurden drei HTML-Templates erstellt und mithilfe von CSS gestaltet: ein Template für den Login, eines für die Registrierung und eines für die Hauptseite. 
 
+Alle Templates verwenden HTML-Formulare. Auf der Hauptseite wurden zwölf Arbeitsplätze erstellt, die jeweils über das <details>-Tag aufklappbar sind. Dadurch lassen sich zusätzliche Informationen einblenden – insbesondere der Status des jeweiligen Arbeitsplatzes: frei, belegt oder besetzt. Wenn ein Arbeitsplatz frei ist, erscheint ein Button, über den er gebucht werden kann. Ist er belegt, wird angezeigt, welcher Nutzer diesen bereits gebucht hat. 
 
 
 ## Backend
