@@ -3,7 +3,7 @@
 <html>
     <head>
        
-        <link rel="stylesheet" href="{% static 'styles.css' %}">
+        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
         <title>Desk-Share-Lock</title>
         <style>
             .container {
@@ -18,7 +18,7 @@
         </style>
     </head>
     <body class="start">
-        <img src="{% static 'desksharelock.jpg' %}" alt="Logo" id="desksharelock">
+        <img src="{% static 'css/desksharelock.jpg' %}" alt="Logo" id="desksharelock">
         <h1>Desk-Share-Lock</h1>   
         <form method="POST">
             {% csrf_token %}
@@ -31,7 +31,6 @@
                 <button type="submit">Einloggen</button>
                 <p>Noch nicht registriert?</p>
                 <a href="{% url 'registrieren' %}">Hier registrieren!</a>
-                <p><a href="{% url 'passwort_vergessen' %}">Passwort vergessen?</a></p>
             </div>
         </form>
     </body>
