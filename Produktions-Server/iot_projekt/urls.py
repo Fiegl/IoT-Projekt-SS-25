@@ -8,4 +8,6 @@ urlpatterns = [
     path('mainpage/', views.hauptseite, name='hauptseite'),
     path('passwort_vergessen/', views.passwort_vergessen, name='passwort_vergessen'),
     path('passwort_zuruecksetzen/<str:token>/', views.passwort_zuruecksetzen, name='passwort_zuruecksetzen'),
+    path('arbeitsplatz_buchen/', views.arbeitsplatz_buchen, name='arbeitsplatz_buchen'),
+    path('arbeitsplatz_abmelden/', views.arbeitsplatz_abmelden, name='arbeitsplatz_abmelden'),
 ]
