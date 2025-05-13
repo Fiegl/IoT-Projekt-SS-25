@@ -1,0 +1,54 @@
+body.start {
+    text-align: center;
+    background-image: url("/static/css/background2.jpg");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+h1 {
+    font-family: "Edwardian Script ITC";
+    font-size: 320%;
+}
+#desksharelock {
+    width: 180px;
+    height: auto;
+}
+body.mainpage {
+    text-align: center;
+    background-image: linear-gradient(to bottom, white, rgba(255, 255, 255, 0) 30%), url("/static/css/background.jpg");
+    background-size: cover; 
+    background-position: center top 170px; /* Lässt oben Platz */
+    background-repeat: no-repeat;
+}
+.arbeitsplatz-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 100px;
+    justify-content: center;
+    padding: 50px;
+}
+.arbeitsplatz-btn {
+    position: relative;
+    font-size: 15px;
+    padding: 10px;
+    background-image: url("/static/css/altholz.jpg");
+    background-size: cover;
+    font-family: "Garamond", serif;
+    font-size: 20px;
+    color: #fff8dc; /* Helle Farbe für gute Lesbarkeit */
+    text-shadow: 1px 1px 2px black;
+}
+.arbeitsplatz-btn .stempelgruen {
+    position: absolute;
+    width: 45px;
+    height: auto;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    object-fit: contain;
+}
+.logout-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
