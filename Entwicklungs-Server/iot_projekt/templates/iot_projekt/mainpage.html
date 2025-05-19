@@ -31,6 +31,12 @@
                     <p>Status: Frei</p>
                     <form method="post" action="{% url 'arbeitsplatz_buchen' %}">
                         {% csrf_token %}
+                        <label for="start">Belegen von:</label>
+                        <input type="datetime-local" name="start_datetime" required>
+
+                        <label for="ende">Belegen bis:</label>
+                        <input type="datetime-local" name="ende_datetime" required>
+                        
                         <input type="hidden" name="desk_id" value="{{ arbeitsplatz.id }}">
                         <button type="submit">Belegen</button>
                     </form>
