@@ -1,23 +1,32 @@
 import RPi.GPIO as GPIO
 
-RED_PIN = 17
-GREEN_PIN = 27
-
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
-# Pins nur EINMAL als Output setzen
-GPIO.setup(RED_PIN, GPIO.OUT)
-GPIO.setup(GREEN_PIN, GPIO.OUT)
+def setup_pins(red_pin, green_pin):
+    GPIO.setup(red_pin, GPIO.OUT)
+    GPIO.setup(green_pin, GPIO.OUT)
 
-def set_led_status(status):
+def led_off(red_pin, green_pin):
+    GPIO.output(red_pin, GPIO.LOW)
+    GPIO.output(green_pin, GPIO.LOW)
+
+def led_red(red_pin, green_pin):
+    GPIO.output(red_pin, GPIO.HIGH)
+    GPIO.output(green_pin, GPIO.LOW)
+
+def led_green(red_pin, green_pin):
+    GPIO.output(red_pin, GPIO.LOW)
+    GPIO.output(green_pin, GPIO.HIGH)
+
+def set_led_status(gpio_red, gpio_green, status):
+    setup_pins(gpio_red, gpio_green)
+
     if status == "frei":
-        GPIO.output(RED_PIN, GPIO.LOW)     # Rot aus
-        GPIO.output(GREEN_PIN, GPIO.HIGH)  # Grün an
+        led_green(gpio_red, gpio_green)
     elif status == "belegt":
-        GPIO.output(RED_PIN, GPIO.HIGH)    # Rot an
-        GPIO.output(GREEN_PIN, GPIO.LOW)   # Grün aus
+        led_red(gpio_red, gpio_green)
     else:
-        GPIO.output(RED_PIN, GPIO.LOW)     # Beide aus
-        GPIO.output(GREEN_PIN, GPIO.LOW)
+        led_off(gpio_red, gpio_green)
+
 
