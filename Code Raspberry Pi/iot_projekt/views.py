@@ -10,6 +10,7 @@ from django.contrib.auth import logout
 from django.core.mail import send_mail #wird f�r Passwort zur�cksetzen ben�tigt
 from functools import wraps #wird f�r den Decorator ben�tigt
 from django.views.decorators.cache import never_cache #verhindert den Cache
+import datetime
 
 from .led_control import set_led_status
 
@@ -19,6 +20,7 @@ from .led_control import set_led_status
 registrierte_benutzer = "/var/www/django-project/datenbank/users.json"
 reset_tokens = "/var/www/django-project/datenbank/reset_tokens.json"
 arbeitsplaetze = "/var/www/django-project/datenbank/arbeitsplaetze.json"
+rechnungsbelege = "/var/www/django-project/datenbank/rechnungsbelege.json"
 
 #Hier ist die Funktion f�r den Decorator
 def login_required(view_func):
@@ -182,15 +184,17 @@ def hauptseite(request):
 
     user_id = request.session.get("user_id")
 
-    # LED-Status aktualisieren
     for arbeitsplatz in arbeitsplaetze_data:
-        status = arbeitsplatz["status"]
-
-        # NUR für Arbeitsplatz 1 LEDs steuern
-        if arbeitsplatz["id"] == "desk-01":
-            set_led_status(status)
+        if arbeitsplatz["id"] in ["desk-01", "desk-02"]:
+            if "gpio_red" in arbeitsplatz and "gpio_green" in arbeitsplatz:
+                set_led_status(
+                    arbeitsplatz["gpio_red"],
+                    arbeitsplatz["gpio_green"],
+                    arbeitsplatz["status"]
+                )
 
     return render(request, 'iot_projekt/mainpage.html', {"arbeitsplaetze": arbeitsplaetze_data, "user_id": user_id})
+
 
 
 
@@ -244,3 +248,46 @@ def arbeitsplatz_abmelden(request):
         json.dump(daten, datei, indent=4)
 
     return redirect("hauptseite")
+
+
+#Hier die Funktion zur Speicherungs der eingegebenen Arbeitszeit in rechnungsbeleg.json
+
+@never_cache
+@login_required
+def arbeitsplatz_status(request):
+    if request.method == "POST":
+        user = request.session.get("username")
+        arbeitsplatz_id = request.POST.get("desk_id")
+        startzeit = request.POST.get("startzeit")
+        endzeit = request.POST.get("endzeit")
+
+        try:
+            start = datetime.datetime.strptime(startzeit, "%H:%M")
+            end = datetime.datetime.strptime(endzeit, "%H:%M")
+            dauer = int((end - start).seconds / 60)  
+        except ValueError:
+            return HttpResponse("Bitte gültige Uhrzeiten im Format HH:MM eingeben.")
+
+        try:
+            with open(rechnungsbelege, "r") as file:
+                daten = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            daten = {"buchungen": []}
+
+        neue_buchung = {
+            "id": str(uuid.uuid4()),
+            "benutzer": user,
+            "arbeitsplatz_id": arbeitsplatz_id,
+            "startzeit": startzeit,
+            "endzeit": endzeit,
+            "dauer_minuten": dauer
+        }
+
+        daten["buchungen"].append(neue_buchung)
+
+        with open(rechnungsbelege, "w") as file:
+            json.dump(daten, file, indent=4)
+
+        return redirect("hauptseite")
+
+    return HttpResponse("Ungültige Anfrage", status=400)
