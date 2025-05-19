@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth import logout
 from django.views.decorators.cache import never_cache
+from datetime import datetime
 
 # Pfade zu JSON-Dateien
 registrierte_benutzer = "C:\\Users\\Besitzer\\django-project\\datenbank\\users.json"
@@ -84,6 +85,19 @@ def hauptseite(request):
 def arbeitsplatz_buchen(request):
     if request.method == "POST":
         desk_id = request.POST.get("desk_id")
+        start = request.POST.get("start_datetime")
+        ende = request.POST.get("ende_datetime")
+
+        try:
+            start_dt = datetime.strptime(start, "%Y-%m-%dT%H:%M")
+            ende_dt = datetime.strptime(ende, "%Y-%m-%dT%H:%M")
+        except ValueError:
+            messages.error(request, "Ungültiges Datumsformat.")
+            return redirect("startseite") 
+        
+        if ende_dt <= start_dt:
+            messages.error(request, "Endzeit muss nach der Startzeit liegen.")
+            return redirect("startseite")
 
         with open(arbeitsplaetze, "r") as datei:
             daten = json.load(datei)
