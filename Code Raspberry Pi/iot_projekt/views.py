@@ -10,7 +10,7 @@ from django.contrib.auth import logout
 from django.core.mail import send_mail #wird f�r Passwort zur�cksetzen ben�tigt
 from functools import wraps #wird f�r den Decorator ben�tigt
 from django.views.decorators.cache import never_cache #verhindert den Cache
-import datetime
+from datetime import datetime
 
 from .led_control import set_led_status
 
@@ -202,27 +202,36 @@ def hauptseite(request):
 
 #Hier kommen die Funktionen f�r die An- und Abmeldung des Arbeitsplatzes
 
-@never_cache
-@login_required
+
+
 def arbeitsplatz_buchen(request):
     if request.method == "POST":
         desk_id = request.POST.get("desk_id")
+        start = request.POST.get("start_datetime")
+        ende = request.POST.get("ende_datetime")
+
+        try:
+            startzeit = datetime.strptime(start, "%Y-%m-%dT%H:%M")
+            endzeit = datetime.strptime(ende, "%Y-%m-%dT%H:%M")
+        except ValueError:
+            return HttpResponse("Ungültiges Datumsformat.") 
+        
+        if endzeit <= startzeit:
+            return HttpResponse("Endzeit muss nach Startzeit liegen.")
 
         with open(arbeitsplaetze, "r") as datei:
             daten = json.load(datei)
 
-        desk = None
         for arbeitsplatz in daten["arbeitsplaetze"]:
-            if arbeitsplatz["id"] == desk_id:
-                desk = arbeitsplatz
+            if arbeitsplatz["id"] == desk_id and arbeitsplatz["status"] == "frei":
+                arbeitsplatz["status"] = "belegt"
+                arbeitsplatz["user_id"] = request.session.get("user_id")
+                arbeitsplatz["startzeit"] = start  # Speichern der Startzeit
+                arbeitsplatz["endzeit"] = ende    # Speichern der Endzeit
                 break
 
-        if desk is not None and desk["status"] == "frei":
-            desk["status"] = "belegt"
-            desk["user_id"] = request.session.get("user_id")
-
-            with open(arbeitsplaetze, "w") as datei:
-                json.dump(daten, datei, indent=4)
+        with open(arbeitsplaetze, "w") as datei:
+            json.dump(daten, datei, indent=4)
 
     return redirect("hauptseite")
 
@@ -230,64 +239,64 @@ def arbeitsplatz_buchen(request):
 @never_cache
 @login_required
 def arbeitsplatz_abmelden(request):
-    if "user_id" not in request.session:
-        return redirect("start")
+    user_id = request.session.get("user_id")
 
-    user_id = request.session["user_id"]
+    with open(arbeitsplaetze, "r") as f:
+        daten = json.load(f)
 
-    with open(arbeitsplaetze, "r") as datei:
-        daten = json.load(datei)
+    desk_id = None
+    startzeit = None
+    endzeit = None
 
     for arbeitsplatz in daten["arbeitsplaetze"]:
         if arbeitsplatz["user_id"] == user_id and arbeitsplatz["status"] == "belegt":
             arbeitsplatz["status"] = "frei"
             arbeitsplatz["user_id"] = None
+            desk_id = arbeitsplatz["id"]
+            startzeit = arbeitsplatz.get("startzeit")
+            endzeit = arbeitsplatz.get("endzeit")
+            arbeitsplatz.pop("startzeit", None)
+            arbeitsplatz.pop("endzeit", None)
             break
 
-    with open(arbeitsplaetze, "w") as datei:
-        json.dump(daten, datei, indent=4)
+    if desk_id and startzeit and endzeit:
+        try:
+            start_dt = datetime.strptime(startzeit, "%Y-%m-%dT%H:%M")
+            end_dt = datetime.strptime(endzeit, "%Y-%m-%dT%H:%M")
+            dauer = int((end_dt - start_dt).total_seconds() / 60)
+        except Exception:
+            dauer = 0
+            start_dt = None
+            end_dt = None
+
+        try:
+            with open(rechnungsbelege, "r") as f:
+                belege = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            belege = {"buchungen": []}
+
+        if start_dt and end_dt:
+            belege["buchungen"].append({
+                "id": str(uuid.uuid4()),
+                "benutzer": request.session.get("username"),
+                "arbeitsplatz_id": desk_id,
+                "startzeit": start_dt.strftime("%Y-%m-%d %H:%M"),
+                "endzeit": end_dt.strftime("%Y-%m-%d %H:%M"),
+                "dauer_minuten": dauer
+            })
+
+            with open(rechnungsbelege, "w") as f:
+                json.dump(belege, f, indent=4)
+
+    # Konvertiere datetime-Objekte in allen Arbeitsplätzen zu Strings
+    for arbeitsplatz in daten["arbeitsplaetze"]:
+        if type(arbeitsplatz.get("startzeit")) == datetime:
+            arbeitsplatz["startzeit"] = arbeitsplatz["startzeit"].strftime("%Y-%m-%dT%H:%M")
+        if type(arbeitsplatz.get("endzeit")) == datetime:
+            arbeitsplatz["endzeit"] = arbeitsplatz["endzeit"].strftime("%Y-%m-%dT%H:%M")
+
+    with open(arbeitsplaetze, "w") as f:
+        json.dump(daten, f, indent=4)
 
     return redirect("hauptseite")
 
-
-#Hier die Funktion zur Speicherungs der eingegebenen Arbeitszeit in rechnungsbeleg.json
-
-@never_cache
-@login_required
-def arbeitsplatz_status(request):
-    if request.method == "POST":
-        user = request.session.get("username")
-        arbeitsplatz_id = request.POST.get("desk_id")
-        startzeit = request.POST.get("startzeit")
-        endzeit = request.POST.get("endzeit")
-
-        try:
-            start = datetime.datetime.strptime(startzeit, "%H:%M")
-            end = datetime.datetime.strptime(endzeit, "%H:%M")
-            dauer = int((end - start).seconds / 60)  
-        except ValueError:
-            return HttpResponse("Bitte gültige Uhrzeiten im Format HH:MM eingeben.")
-
-        try:
-            with open(rechnungsbelege, "r") as file:
-                daten = json.load(file)
-        except (FileNotFoundError, json.JSONDecodeError):
-            daten = {"buchungen": []}
-
-        neue_buchung = {
-            "id": str(uuid.uuid4()),
-            "benutzer": user,
-            "arbeitsplatz_id": arbeitsplatz_id,
-            "startzeit": startzeit,
-            "endzeit": endzeit,
-            "dauer_minuten": dauer
-        }
-
-        daten["buchungen"].append(neue_buchung)
-
-        with open(rechnungsbelege, "w") as file:
-            json.dump(daten, file, indent=4)
-
-        return redirect("hauptseite")
-
-    return HttpResponse("Ungültige Anfrage", status=400)
