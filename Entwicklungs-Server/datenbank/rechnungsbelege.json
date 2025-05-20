@@ -1,20 +1,3 @@
 {
-    "buchungen": [
-        {
-            "id": "999a490f-7cd1-4aec-b027-15c831c988de",
-            "benutzer": "Stefan",
-            "arbeitsplatz_id": "desk-01",
-            "startzeit": "2025-05-20 15:00",
-            "endzeit": "2025-05-20 19:00",
-            "dauer_minuten": 240
-        },
-        {
-            "id": "811ff56c-11ab-44fb-965e-c84835586fe9",
-            "benutzer": "Stefan",
-            "arbeitsplatz_id": "desk-01",
-            "startzeit": "2025-05-21 23:00",
-            "endzeit": "2025-05-22 01:00",
-            "dauer_minuten": 120
-        }
-    ]
+    "buchungen": []
 }
