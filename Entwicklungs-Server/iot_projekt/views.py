@@ -1,17 +1,34 @@
 import json
 import uuid
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
 from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views import View
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth import logout
-from django.views.decorators.cache import never_cache
+from django.core.mail import send_mail #wird f�r Passwort zur�cksetzen ben�tigt
+from functools import wraps #wird f�r den Decorator ben�tigt
+from django.views.decorators.cache import never_cache #verhindert den Cache
 from datetime import datetime
 
-# Pfade zu JSON-Dateien
-registrierte_benutzer = "C:\\Users\\Besitzer\\django-project\\datenbank\\users.json"
-arbeitsplaetze = "C:\\Users\\Besitzer\\django-project\\datenbank\\arbeitsplaetze.json"
+# Pfad zu den JSON-Datenbanken
 
+registrierte_benutzer = "/var/www/django-project/datenbank/users.json"
+reset_tokens = "/var/www/django-project/datenbank/reset_tokens.json"
+arbeitsplaetze = "/var/www/django-project/datenbank/arbeitsplaetze.json"
+rechnungsbelege = "/var/www/django-project/datenbank/rechnungsbelege.json"
 
+#Hier ist die Funktion f�r den Decorator
+def login_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.session.get("username"):
+            return redirect("start")
+        return view_func(request, *args, **kwargs)
+    return wrapper
+    
+@never_cache
 def registrieren(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -39,8 +56,8 @@ def registrieren(request):
         return redirect("start")
 
     return render(request, 'iot_projekt/registrieren.html')
-
-
+    
+@never_cache
 def start(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -62,23 +79,37 @@ def start(request):
     return render(request, 'iot_projekt/start.html')
 
 
-
+@never_cache
+@login_required
 def logout_view(request):
     logout(request)
     request.session.flush()
     return redirect("start")
+    
+    
 
 
+
+#Hier die Funktion f�r die MainPage
+@never_cache
+@login_required
 def hauptseite(request):
     if "username" not in request.session:
         return redirect("start")
 
     with open(arbeitsplaetze, "r") as file:
         arbeitsplaetze_data = json.load(file)["arbeitsplaetze"]
-        
+
     user_id = request.session.get("user_id")
 
     return render(request, 'iot_projekt/mainpage.html', {"arbeitsplaetze": arbeitsplaetze_data, "user_id": user_id})
+
+
+
+
+
+
+#Hier kommen die Funktionen f�r die An- und Abmeldung des Arbeitsplatzes
 
 
 
@@ -89,58 +120,93 @@ def arbeitsplatz_buchen(request):
         ende = request.POST.get("ende_datetime")
 
         try:
-            start_dt = datetime.strptime(start, "%Y-%m-%dT%H:%M")
-            ende_dt = datetime.strptime(ende, "%Y-%m-%dT%H:%M")
+            startzeit = datetime.strptime(start, "%Y-%m-%dT%H:%M")
+            endzeit = datetime.strptime(ende, "%Y-%m-%dT%H:%M")
         except ValueError:
-            messages.error(request, "Ungültiges Datumsformat.")
-            return redirect("startseite") 
+            return HttpResponse("Ungültiges Datumsformat.") 
         
-        if ende_dt <= start_dt:
-            messages.error(request, "Endzeit muss nach der Startzeit liegen.")
-            return redirect("startseite")
+        if endzeit <= startzeit:
+            return HttpResponse("Endzeit muss nach Startzeit liegen.")
 
         with open(arbeitsplaetze, "r") as datei:
             daten = json.load(datei)
 
-        
-        desk = None #Als Schutz vor unbefugten POST-Request (Manipulation von Formularen)
-        
         for arbeitsplatz in daten["arbeitsplaetze"]:
-            if arbeitsplatz["id"] == desk_id:
-                desk = arbeitsplatz
+            if arbeitsplatz["id"] == desk_id and arbeitsplatz["status"] == "frei":
+                arbeitsplatz["status"] = "belegt"
+                arbeitsplatz["user_id"] = request.session.get("user_id")
+                arbeitsplatz["startzeit"] = start  # Speichern der Startzeit
+                arbeitsplatz["endzeit"] = ende    # Speichern der Endzeit
                 break
 
-        if desk is not None:
-        
-            if desk["status"] == "frei":
-                desk["status"] = "belegt"
-                desk["user_id"] = request.session.get("user_id")
-
-                
-                with open(arbeitsplaetze, "w") as datei:
-                    json.dump(daten, datei, indent=4)
+        with open(arbeitsplaetze, "w") as datei:
+            json.dump(daten, datei, indent=4)
 
     return redirect("hauptseite")
 
 
-
+@never_cache
+@login_required
 def arbeitsplatz_abmelden(request):
-    if "user_id" not in request.session:
-        return redirect("start")
+    user_id = request.session.get("user_id")
 
-    user_id = request.session["user_id"]
+    with open(arbeitsplaetze, "r") as f:
+        daten = json.load(f)
 
-    with open(arbeitsplaetze, "r") as datei:
-        daten = json.load(datei)
+    desk_id = None
+    startzeit = None
+    endzeit = None
 
     for arbeitsplatz in daten["arbeitsplaetze"]:
         if arbeitsplatz["user_id"] == user_id and arbeitsplatz["status"] == "belegt":
             arbeitsplatz["status"] = "frei"
             arbeitsplatz["user_id"] = None
-            break  
+            desk_id = arbeitsplatz["id"]
+            startzeit = arbeitsplatz.get("startzeit")
+            endzeit = arbeitsplatz.get("endzeit")
+            arbeitsplatz.pop("startzeit", None)
+            arbeitsplatz.pop("endzeit", None)
+            break
 
-    with open(arbeitsplaetze, "w") as datei:
-        json.dump(daten, datei, indent=4)
+    if desk_id and startzeit and endzeit:
+        try:
+            start_dt = datetime.strptime(startzeit, "%Y-%m-%dT%H:%M")
+            end_dt = datetime.strptime(endzeit, "%Y-%m-%dT%H:%M")
+            dauer = int((end_dt - start_dt).total_seconds() / 60)
+        except Exception:
+            dauer = 0
+            start_dt = None
+            end_dt = None
+
+        try:
+            with open(rechnungsbelege, "r") as f:
+                belege = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            belege = {"buchungen": []}
+
+        if start_dt and end_dt:
+            belege["buchungen"].append({
+                "id": str(uuid.uuid4()),
+                "benutzer": request.session.get("username"),
+                "arbeitsplatz_id": desk_id,
+                "startzeit": start_dt.strftime("%Y-%m-%d %H:%M"),
+                "endzeit": end_dt.strftime("%Y-%m-%d %H:%M"),
+                "dauer_minuten": dauer
+            })
+
+            with open(rechnungsbelege, "w") as f:
+                json.dump(belege, f, indent=4)
+
+    # Konvertiere datetime-Objekte in allen Arbeitsplätzen zu Strings
+    for arbeitsplatz in daten["arbeitsplaetze"]:
+        if type(arbeitsplatz.get("startzeit")) == datetime:
+            arbeitsplatz["startzeit"] = arbeitsplatz["startzeit"].strftime("%Y-%m-%dT%H:%M")
+        if type(arbeitsplatz.get("endzeit")) == datetime:
+            arbeitsplatz["endzeit"] = arbeitsplatz["endzeit"].strftime("%Y-%m-%dT%H:%M")
+
+    with open(arbeitsplaetze, "w") as f:
+        json.dump(daten, f, indent=4)
 
     return redirect("hauptseite")
+
 
