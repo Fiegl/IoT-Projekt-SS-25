@@ -18,7 +18,20 @@
     </form>
 
     <img src="{% static 'images/desksharelock.jpg' %}" alt="Logo" id="desksharelock">
-    <h1>Desk-Share-Lock</h1><br><br>
+    <h1>Desk-Share-Lock</h1><br>
+    <header>
+
+        <div class="dropdown">
+            <div class="hamburger" onclick="toggleDropdown()">&#9776;</div>
+            <div class="dropdown-content" id="dropdownContent">
+                <a href="#">Buchungsübersicht</a>
+                <a href="#">Passwort ändern</a>
+                <a href="#">Profil löschen</a>
+            </div>
+        </div>  
+    </header> 
+    <br>
+    
     <h3>Hier können Sie einen freien Arbeitsplatz auswählen</h3>
 
     <div class="arbeitsplatz-container">
@@ -61,7 +74,18 @@
         {% endfor %}
 
     </div>
-
+    
+    <script>
+        function toggleDropdown() {
+            var content = document.getElementById("dropdownContent");
+                if (content.style.display === "block") {
+                    content.style.display = "none";
+                } 
+                else {
+                    content.style.display = "block";
+                }
+            }           
+    </script>
 </body>
 
 
