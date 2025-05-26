@@ -105,7 +105,11 @@ def hauptseite(request):
     return render(request, 'iot_projekt/mainpage.html', {"arbeitsplaetze": arbeitsplaetze_data, "user_id": user_id})
 
 
+def buchungsuebersicht(request):
+    return render(request, 'iot_projekt/buchungsuebersicht.html')
 
+def passwortaendern(request):
+    return render(request, 'iot_projekt/passwort_aendern.html')
 
 
 
