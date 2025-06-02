@@ -41,6 +41,6 @@
         "status": "deaktiviert",
         "gpio_pin": 25,
         "user_id": null
-      },
+      }
     ]
   }
