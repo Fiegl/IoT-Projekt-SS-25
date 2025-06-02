@@ -1,6 +1,6 @@
 body.start {
     text-align: center;
-    background-image: url("/static/css/background2.jpg");
+    background-image: url("../images/background2.jpg");
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
@@ -15,7 +15,7 @@ h1 {
 }
 body.mainpage {
     text-align: center;
-    background-image: linear-gradient(to bottom, white, rgba(255, 255, 255, 0) 30%), url("/static/css/background.jpg");
+    background-image: linear-gradient(to bottom, white, rgba(255, 255, 255, 0) 30%), url("../images/background.jpg");
     background-size: cover; 
     background-position: center top 170px; /* Lässt oben Platz */
     background-repeat: no-repeat;
@@ -31,7 +31,7 @@ body.mainpage {
     position: relative;
     font-size: 15px;
     padding: 10px;
-    background-image: url("/static/css/altholz.jpg");
+    background-image: url("../images/altholz.jpg");
     background-size: cover;
     font-family: "Garamond", serif;
     font-size: 20px;
@@ -51,4 +51,34 @@ body.mainpage {
     position: absolute;
     top: 20px;
     right: 20px;
+}
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.hamburger {
+    font-size: 30px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f1f1f1;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    display: block;
+    text-decoration: none;
+}
+
+.dropdown-content a:hover {
+    background-color: #ddd;
 }
