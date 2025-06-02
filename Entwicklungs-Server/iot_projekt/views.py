@@ -1,16 +1,15 @@
 import json
 import uuid
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
 from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views import View
 from django.contrib.auth.hashers import make_password, check_password
-from django.contrib.auth import logout
-from django.core.mail import send_mail #wird f�r Passwort zur�cksetzen ben�tigt
 from functools import wraps #wird f�r den Decorator ben�tigt
 from django.views.decorators.cache import never_cache #verhindert den Cache
 from datetime import datetime
+from django.contrib import messages
+
+#from .led_control import set_led_status (nur über Raspi)
+
 
 # Pfad zu den JSON-Datenbanken
 
@@ -82,11 +81,8 @@ def start(request):
 @never_cache
 @login_required
 def logout_view(request):
-    logout(request)
     request.session.flush()
     return redirect("start")
-    
-    
 
 
 
@@ -102,14 +98,19 @@ def hauptseite(request):
 
     user_id = request.session.get("user_id")
 
+    for arbeitsplatz in arbeitsplaetze_data:
+        if arbeitsplatz["id"] in ["desk-01", "desk-02"]:
+            if "gpio_red" in arbeitsplatz and "gpio_green" in arbeitsplatz:
+                set_led_status(
+                    arbeitsplatz["gpio_red"],
+                    arbeitsplatz["gpio_green"],
+                    arbeitsplatz["status"]
+                )
+
     return render(request, 'iot_projekt/mainpage.html', {"arbeitsplaetze": arbeitsplaetze_data, "user_id": user_id})
 
 
-def buchungsuebersicht(request):
-    return render(request, 'iot_projekt/buchungsuebersicht.html')
 
-def passwortaendern(request):
-    return render(request, 'iot_projekt/passwort_aendern.html')
 
 
 
@@ -212,5 +213,84 @@ def arbeitsplatz_abmelden(request):
         json.dump(daten, f, indent=4)
 
     return redirect("hauptseite")
+
+
+# Funktionen in den Profil-Einstelungen
+ 
+# Funktion für die Ablegung der Rechnungen im Profil
+
+@login_required
+def buchungsuebersicht(request):
+    username = request.session.get("username")
+    buchungen = []
+
+    try:
+        with open(rechnungsbelege, "r") as file:
+            daten = json.load(file)
+            for buchung in daten["buchungen"]:
+                if buchung["benutzer"] == username:
+                    buchungen.append(buchung)
+    except FileNotFoundError:
+        pass
+
+    return render(request, "iot_projekt/buchungsuebersicht.html", {"buchungen": buchungen})
+
+
+# Funktion zum Passwort ändern
+
+@login_required
+@login_required
+def passwort_aendern(request):
+    if request.method == "POST":
+        pass1 = request.POST.get("passwort1")
+        pass2 = request.POST.get("passwort2")
+
+        if pass1 != pass2:
+            messages.error(request, "Passwörter stimmen nicht überein.")
+            return render(request, "iot_projekt/passwort_aendern.html")
+
+        username = request.session.get("username")
+
+        with open(registrierte_benutzer, "r") as file:
+            daten = json.load(file)
+
+        for user in daten["users"]:
+            if user["username"] == username:
+                user["password"] = make_password(pass1)
+                break
+
+        with open(registrierte_benutzer, "w") as file:
+            json.dump(daten, file, indent=4)
+
+        messages.success(request, "Passwort erfolgreich geändert.")
+        return redirect("hauptseite")
+
+    return render(request, "iot_projekt/passwort_aendern.html")
+
+
+
+# Funktion zum Löschen des Profils
+
+@login_required
+def profil_loeschen(request):
+    username = request.session.get("username")
+
+    try:
+        with open(registrierte_benutzer, "r") as file:
+            data = json.load(file)
+
+        neue_liste = [user for user in data["users"] if user["username"] != username]
+
+        data["users"] = neue_liste
+
+        with open(registrierte_benutzer, "w") as file:
+            json.dump(data, file, indent=4)
+
+    except Exception as e:
+        return HttpResponse("Fehler beim Löschen des Profils: " + str(e))
+
+    # Session löschen
+    request.session.flush()
+    return redirect("start")
 
 
