@@ -42,33 +42,5 @@
         "gpio_pin": 25,
         "user_id": null
       },
-      {
-        "id": "desk-07",
-        "name": "Arbeitsplatz 7",
-        "status": "deaktiviert",
-        "gpio_pin": 5,
-        "user_id": null
-      },
-      {
-        "id": "desk-08",
-        "name": "Arbeitsplatz 8",
-        "status": "deaktiviert",
-        "gpio_pin": 6,
-        "user_id": null
-      },
-      {
-        "id": "desk-09",
-        "name": "Arbeitsplatz 9",
-        "status": "deaktiviert",
-        "gpio_pin": 12,
-        "user_id": null
-      },
-      {
-        "id": "desk-10",
-        "name": "Arbeitsplatz 10",
-        "status": "deaktiviert",
-        "gpio_pin": 13,
-        "user_id": null
-      }
     ]
   }
