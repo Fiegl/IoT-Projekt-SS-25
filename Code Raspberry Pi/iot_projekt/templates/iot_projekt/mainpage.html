@@ -1,14 +1,11 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
-
-
 <head>
     <meta charset="UTF-8">
     <title>Desk-Share-Lock</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
-
 
 <body class="mainpage">
 
@@ -17,8 +14,22 @@
         <button type="submit" class="logout-button">Ausloggen</button>
     </form>
 
-    <img src="{% static 'css/desksharelock.jpg' %}" alt="Logo" id="desksharelock">
-    <h1>Desk-Share-Lock</h1><br><br>
+    <img src="{% static 'images/desksharelock.jpg' %}" alt="Logo" id="desksharelock">
+    <h1>Desk-Share-Lock</h1><br>
+
+    <header>
+        <div class="dropdown">
+            <div class="hamburger" onclick="toggleDropdown()">&#9776;</div>
+            <div class="dropdown-content" id="dropdownContent">
+                <a href="{% url 'buchungsuebersicht' %}">Buchungsübersicht</a>
+                <a href="{% url 'passwort_aendern' %}">Passwort ändern</a>
+                <a href="{% url 'profil_loeschen' %}">Profil löschen</a>
+
+            </div>
+        </div>  
+    </header> 
+    <br>
+    
     <h3>Hier können Sie einen freien Arbeitsplatz auswählen</h3>
 
     <div class="arbeitsplatz-container">
@@ -31,6 +42,12 @@
                     <p>Status: Frei</p>
                     <form method="post" action="{% url 'arbeitsplatz_buchen' %}">
                         {% csrf_token %}
+                        <label for="start">Belegen von:</label>
+                        <input type="datetime-local" name="start_datetime" required>
+
+                        <label for="ende">Belegen bis:</label>
+                        <input type="datetime-local" name="ende_datetime" required>
+                        
                         <input type="hidden" name="desk_id" value="{{ arbeitsplatz.id }}">
                         <button type="submit">Belegen</button>
                     </form>
@@ -55,5 +72,17 @@
         {% endfor %}
 
     </div>
-
+    
+    <script>
+        function toggleDropdown() {
+            var content = document.getElementById("dropdownContent");
+            if (content.style.display === "block") {
+                content.style.display = "none";
+            } else {
+                content.style.display = "block";
+            }
+        }           
+    </script>
 </body>
+</html>
+
