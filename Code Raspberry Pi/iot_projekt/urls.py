@@ -10,4 +10,7 @@ urlpatterns = [
     path('passwort_zuruecksetzen/<str:token>/', views.passwort_zuruecksetzen, name='passwort_zuruecksetzen'),
     path('arbeitsplatz_buchen/', views.arbeitsplatz_buchen, name='arbeitsplatz_buchen'),
     path('arbeitsplatz_abmelden/', views.arbeitsplatz_abmelden, name='arbeitsplatz_abmelden'),
+    path('buchungsuebersicht', views.buchungsuebersicht, name='buchungsuebersicht'),
+    path('passwort_aendern', views.passwort_aendern, name='passwort_aendern'),
+    path("profil_loeschen/", views.profil_loeschen, name="profil_loeschen"),
 ]
