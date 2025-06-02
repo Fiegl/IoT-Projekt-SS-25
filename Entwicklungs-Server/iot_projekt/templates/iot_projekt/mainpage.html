@@ -1,14 +1,11 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
-
-
 <head>
     <meta charset="UTF-8">
     <title>Desk-Share-Lock</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
-
 
 <body class="mainpage">
 
@@ -19,14 +16,15 @@
 
     <img src="{% static 'images/desksharelock.jpg' %}" alt="Logo" id="desksharelock">
     <h1>Desk-Share-Lock</h1><br>
-    <header>
 
+    <header>
         <div class="dropdown">
             <div class="hamburger" onclick="toggleDropdown()">&#9776;</div>
             <div class="dropdown-content" id="dropdownContent">
-                <a href="#">Buchungsübersicht</a>
-                <a href="#">Passwort ändern</a>
-                <a href="#">Profil löschen</a>
+                <a href="{% url 'buchungsuebersicht' %}">Buchungsübersicht</a>
+                <a href="{% url 'passwort_aendern' %}">Passwort ändern</a>
+                <a href="{% url 'profil_loeschen' %}">Profil löschen</a>
+
             </div>
         </div>  
     </header> 
@@ -78,16 +76,12 @@
     <script>
         function toggleDropdown() {
             var content = document.getElementById("dropdownContent");
-                if (content.style.display === "block") {
-                    content.style.display = "none";
-                } 
-                else {
-                    content.style.display = "block";
-                }
-            }           
+            if (content.style.display === "block") {
+                content.style.display = "none";
+            } else {
+                content.style.display = "block";
+            }
+        }           
     </script>
 </body>
-
-
 </html>
-
