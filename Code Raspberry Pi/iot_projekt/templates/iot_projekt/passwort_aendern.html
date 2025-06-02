@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <title>Desk-Share-Lock</title>
+    <style>
+        .container {
+            padding: 10px;
+            margin: 10px auto;
+            border-style: groove;
+            border-radius: 6px;
+            width: 300px;
+            height: auto;
+        }
+        .message-list {
+            color: red;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="start">
+    <img src="{% static 'desksharelock.jpg' %}" alt="Logo" id="desksharelock">
+    <h1>Desk-Share-Lock</h1>   
+
+    {% if messages %}
+        <ul class="message-list">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="container">
+            <h2>Passwort ändern</h2>
+            <label for="passwort1">Neues Passwort</label><br>
+            <input type="password" name="passwort1" required><br><br>
+            <label for="passwort2">Neues Passwort wiederholen</label><br>
+            <input type="password" name="passwort2" required><br><br>
+            <button type="submit">Neues Passwort speichern</button>
+            <button type="button" onclick="history.back()">Zurück</button>
+        </div>
+    </form>
+</body>
+</html>

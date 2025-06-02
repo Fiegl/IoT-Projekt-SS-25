@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+        <title>Desk-Share-Lock</title>
+        <style>
+            table, th, td {
+                width: 50%;
+                margin: auto;
+                border: 2px solid black;
+                border-collapse: collapse;
+                background-color: beige;
+                text-align: center;
+                padding: 8px;
+            }
+        </style>
+    </head>
+    <body class="mainpage">
+        <form action="{% url 'logout' %}" method="post" class="logout-form">
+            {% csrf_token %}
+            <button type="submit" class="logout-button">Ausloggen</button>
+        </form> 
+        <img src="{% static 'desksharelock.jpg' %}" alt="Logo" id="desksharelock">
+        <h1>Desk-Share-Lock</h1><br><br>
+        <h3>Deine Buchungsübersicht</h3>
+        <table>
+            <tr>
+                <th>Startzeit</th>
+                <th>Endzeit</th>
+                <th>Arbeitsplatz</th>
+                <th>Download</th>  
+            </tr>
+            {% for buchung in buchungen %}
+            <tr>
+                <td>{{ buchung.startzeit }}</td>
+                <td>{{ buchung.endzeit }}</td>
+                <td>{{ buchung.arbeitsplatz_id }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">Keine Buchungen gefunden.</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </body>
+</html>
