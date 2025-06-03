@@ -14,9 +14,10 @@
         <button type="submit" class="logout-button">Ausloggen</button>
     </form>
 
-    <img src="{% static 'images/desksharelock.jpg' %}" alt="Logo" id="desksharelock">
+    <img src="{% static 'css/desksharelock.jpg' %}" alt="Logo" id="desksharelock">
     <h1>Desk-Share-Lock</h1><br>
 
+    {% if request.session.username %}
     <header>
         <div class="dropdown">
             <div class="hamburger" onclick="toggleDropdown()">&#9776;</div>
@@ -28,6 +29,7 @@
             </div>
         </div>  
     </header> 
+    {% endif %}
     <br>
     
     <h3>Hier können Sie einen freien Arbeitsplatz auswählen</h3>
