@@ -62,6 +62,9 @@
                         <form method="post" action="{% url 'arbeitsplatz_abmelden' %}">
                             {% csrf_token %}
                             <input type="hidden" name="desk_id" value="{{ arbeitsplatz.id }}">
+                            {% if schreibtischhoehe %}
+                            <p>Deine empfohlene Tischhöhe: {{ schreibtischhoehe }} cm</p>
+                            {% endif %}
                             <button type="submit">Abmelden</button>
                         </form>
                     {% endif %}
