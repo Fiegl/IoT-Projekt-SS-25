@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>Desk-Share-Lock</title>
@@ -27,54 +28,57 @@
                 <a href="{% url 'profil_loeschen' %}">Profil löschen</a>
 
             </div>
-        </div>  
-    </header> 
+        </div>
+    </header>
     {% endif %}
     <br>
-    
+
     <h3>Hier können Sie einen freien Arbeitsplatz auswählen</h3>
 
     <div class="arbeitsplatz-container">
 
         {% for arbeitsplatz in arbeitsplaetze %}
-            <details class="arbeitsplatz-details">
-                <summary class="arbeitsplatz-btn">{{ arbeitsplatz.name }}</summary>
+        <details class="arbeitsplatz-details">
+            <summary class="arbeitsplatz-btn">{{ arbeitsplatz.name }}</summary>
 
-                {% if arbeitsplatz.status == "frei" %}
-                    <p>Status: Frei</p>
-                    <form method="post" action="{% url 'arbeitsplatz_buchen' %}">
-                        {% csrf_token %}
-                        <label for="start">Belegen von:</label>
-                        <input type="datetime-local" name="start_datetime" required>
+            {% if arbeitsplatz.status == "frei" %}
+            <p>Status: Frei</p>
+            <form method="post" action="{% url 'arbeitsplatz_buchen' %}">
+                {% csrf_token %}
+                <label for="start">Belegen von:</label>
+                <input type="datetime-local" name="start_datetime" required>
 
-                        <label for="ende">Belegen bis:</label>
-                        <input type="datetime-local" name="ende_datetime" required>
-                        
-                        <input type="hidden" name="desk_id" value="{{ arbeitsplatz.id }}">
-                        <button type="submit">Belegen</button>
-                    </form>
+                <label for="ende">Belegen bis:</label>
+                <input type="datetime-local" name="ende_datetime" required>
 
-                {% elif arbeitsplatz.status == "belegt" %}
-                    <p>Status: Belegt</p>
-                    <p>Benutzer: {{ arbeitsplatz.user_id }}</p>
-                
-                    {% if arbeitsplatz.user_id == user_id %}
-                        <form method="post" action="{% url 'arbeitsplatz_abmelden' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="desk_id" value="{{ arbeitsplatz.id }}">
-                            <button type="submit">Abmelden</button>
-                        </form>
-                    {% endif %}
+                <input type="hidden" name="desk_id" value="{{ arbeitsplatz.id }}">
+                <button type="submit">Belegen</button>
+            </form>
 
-                {% elif arbeitsplatz.status == "deaktiviert" %}
-                    <p>Status: Deaktiviert</p>
-                    <p>Dieser Platz ist aktuell nicht verfügbar.</p>
+            {% elif arbeitsplatz.status == "belegt" %}
+            <p>Status: Belegt</p>
+            <p>Benutzer: {{ arbeitsplatz.user_id }}</p>
+
+            {% if arbeitsplatz.user_id == user_id %}
+            <form method="post" action="{% url 'arbeitsplatz_abmelden' %}">
+                {% csrf_token %}
+                <input type="hidden" name="desk_id" value="{{ arbeitsplatz.id }}">
+                {% if schreibtischhoehe %}
+                <p>Deine empfohlene Tischhöhe: {{ schreibtischhoehe }} cm</p>
                 {% endif %}
-            </details>
+                <button type="submit">Abmelden</button>
+            </form>
+            {% endif %}
+
+            {% elif arbeitsplatz.status == "deaktiviert" %}
+            <p>Status: Deaktiviert</p>
+            <p>Dieser Platz ist aktuell nicht verfügbar.</p>
+            {% endif %}
+        </details>
         {% endfor %}
 
     </div>
-    
+
     <script>
         function toggleDropdown() {
             var content = document.getElementById("dropdownContent");
@@ -86,5 +90,5 @@
         }           
     </script>
 </body>
-</html>
 
+</html>
