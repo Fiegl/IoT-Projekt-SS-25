@@ -1,11 +1,11 @@
-import json
+import json, csv
 import uuid
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.hashers import make_password, check_password
-from django.core.mail import send_mail #wird f�r Passwort zur�cksetzen ben�tigt
-from functools import wraps #wird f�r den Decorator ben�tigt
-from django.views.decorators.cache import never_cache #verhindert den Cache
+from django.core.mail import send_mail                                      #wird f�r Passwort zur�cksetzen ben�tigt
+from functools import wraps                                                 #wird f�r den Decorator ben�tigt
+from django.views.decorators.cache import never_cache                       #verhindert den Cache
 from datetime import datetime
 from django.contrib import messages
 
@@ -41,11 +41,13 @@ def registrieren(request):
         if any(user["username"] == username for user in data["users"]):
             return HttpResponse("Benutzername bereits vergeben.")
 
+        koerpergroesse = int(request.POST.get("koerpergroeße"))
         new_user = {
             "id": str(uuid.uuid4()),
             "username": username,
             "email": email,
-            "password": make_password(password)
+            "password": make_password(password),
+            "koerpergroesse": koerpergroesse
         }
 
         data["users"].append(new_user)
@@ -84,6 +86,10 @@ def start(request):
 def logout_view(request):
     request.session.flush()
     return redirect("start")
+
+def berechne_schreibtischhoehe(koerpergroesse_cm):
+    return round(koerpergroesse_cm * 0.4)
+
     
     
 #Hier sind die Funktionen f�r das Passwort zur�cksetzen (SMTP GMAIL, siehe settings.py)
@@ -178,18 +184,36 @@ def hauptseite(request):
     with open(arbeitsplaetze, "r") as file:
         arbeitsplaetze_data = json.load(file)["arbeitsplaetze"]
 
+    with open(registrierte_benutzer, "r") as file:
+        users = json.load(file)["users"]
+
     user_id = request.session.get("user_id")
+    schreibtischhoehe = None
 
+    #hier kommt die importierte GPIO-Fuktion!!!
     for arbeitsplatz in arbeitsplaetze_data:
-        if arbeitsplatz["id"] in ["desk-01", "desk-02"]:
-            if "gpio_red" in arbeitsplatz and "gpio_green" in arbeitsplatz:
-                set_led_status(
-                    arbeitsplatz["gpio_red"],
-                    arbeitsplatz["gpio_green"],
-                    arbeitsplatz["status"]
-                )
+        if "gpio_red" in arbeitsplatz and "gpio_green" in arbeitsplatz:
+            set_led_status(
+                arbeitsplatz["gpio_red"],
+                arbeitsplatz["gpio_green"],
+                arbeitsplatz["status"]
+            )
 
-    return render(request, 'iot_projekt/mainpage.html', {"arbeitsplaetze": arbeitsplaetze_data, "user_id": user_id})
+    #Schreibtischhöhe berechnen, wenn der User angemeldet ist
+    for arbeitsplatz in arbeitsplaetze_data:
+        if arbeitsplatz["user_id"] == user_id:
+            for user in users:
+                if user["id"] == user_id:
+                    schreibtischhoehe = berechne_schreibtischhoehe(user.get("koerpergroesse", 170))
+                    break
+            break
+
+    return render(request, 'iot_projekt/mainpage.html', {
+        "arbeitsplaetze": arbeitsplaetze_data,
+        "user_id": user_id,
+        "schreibtischhoehe": schreibtischhoehe
+    })
+
 
 
 
@@ -198,8 +222,8 @@ def hauptseite(request):
 
 #Hier kommen die Funktionen f�r die An- und Abmeldung des Arbeitsplatzes
 
-
-
+@never_cache
+@login_required
 def arbeitsplatz_buchen(request):
     if request.method == "POST":
         desk_id = request.POST.get("desk_id")
@@ -317,10 +341,44 @@ def buchungsuebersicht(request):
 
     return render(request, "iot_projekt/buchungsuebersicht.html", {"buchungen": buchungen})
 
+# Funktion als CSV-Download
+
+@login_required
+def download_als_csv(request):
+    username = request.session.get("username")
+
+    try:
+        with open(rechnungsbelege, "r") as file:
+            daten = json.load(file)
+            user_buchungen = [
+                buchung for buchung in daten.get("buchungen", [])
+                if buchung.get("benutzer") == username
+            ]
+    except FileNotFoundError:
+        user_buchungen = []
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="buchungen.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Benutzer', 'Arbeitsplatz', 'Startzeit', 'Endzeit', 'Dauer (Minuten)'])
+
+    for buchung in user_buchungen:
+        writer.writerow([
+            buchung.get("benutzer", username),
+            buchung.get("arbeitsplatz_id", ""),
+            buchung.get("startzeit", ""),
+            buchung.get("endzeit", ""),
+            buchung.get("dauer_minuten", "")
+        ])
+
+    return response
+
+
+
 
 # Funktion zum Passwort ändern
 
-@login_required
 @login_required
 def passwort_aendern(request):
     if request.method == "POST":
@@ -358,21 +416,37 @@ def profil_loeschen(request):
     username = request.session.get("username")
 
     try:
+        #Benutzer löschen
         with open(registrierte_benutzer, "r") as file:
             data = json.load(file)
 
         neue_liste = [user for user in data["users"] if user["username"] != username]
-
         data["users"] = neue_liste
 
         with open(registrierte_benutzer, "w") as file:
             json.dump(data, file, indent=4)
 
+        #Buchungen löschen
+        try:
+            with open(rechnungsbelege, "r") as f:
+                belege = json.load(f)
+                neue_buchungen = [
+                    buchung for buchung in belege.get("buchungen", [])
+                    if buchung.get("benutzer") != username
+                ]
+                belege["buchungen"] = neue_buchungen
+
+            with open(rechnungsbelege, "w") as f:
+                json.dump(belege, f, indent=4)
+
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
+
     except Exception as e:
         return HttpResponse("Fehler beim Löschen des Profils: " + str(e))
 
-    # Session löschen
     request.session.flush()
     return redirect("start")
+
 
 
