@@ -39,11 +39,13 @@ def registrieren(request):
         if any(user["username"] == username for user in data["users"]):
             return HttpResponse("Benutzername bereits vergeben.")
 
+        koerpergroesse = int(request.POST.get("koerpergroeße"))
         new_user = {
             "id": str(uuid.uuid4()),
             "username": username,
             "email": email,
-            "password": make_password(password)
+            "password": make_password(password),
+            "koerpergroesse": koerpergroesse
         }
 
         data["users"].append(new_user)
@@ -83,6 +85,9 @@ def logout_view(request):
     request.session.flush()
     return redirect("start")
     
+
+def berechne_schreibtischhoehe(koerpergroesse_cm):
+    return round(koerpergroesse_cm * 0.4)
     
 
 #Hier die Funktion f�r die MainPage
@@ -95,18 +100,26 @@ def hauptseite(request):
     with open(arbeitsplaetze, "r") as file:
         arbeitsplaetze_data = json.load(file)["arbeitsplaetze"]
 
+    with open(registrierte_benutzer, "r") as file:
+        users = json.load(file)["users"]
+
     user_id = request.session.get("user_id")
 
-    for arbeitsplatz in arbeitsplaetze_data:
-        if arbeitsplatz["id"] in ["desk-01", "desk-02"]:
-            if "gpio_red" in arbeitsplatz and "gpio_green" in arbeitsplatz:
-                set_led_status(
-                    arbeitsplatz["gpio_red"],
-                    arbeitsplatz["gpio_green"],
-                    arbeitsplatz["status"]
-                )
+    schreibtischhoehe = None
 
-    return render(request, 'iot_projekt/mainpage.html', {"arbeitsplaetze": arbeitsplaetze_data, "user_id": user_id})
+    for arbeitsplatz in arbeitsplaetze_data:
+        if arbeitsplatz["user_id"] == user_id:
+            for user in users:
+                if user["id"] == user_id:
+                    schreibtischhoehe = berechne_schreibtischhoehe(user.get("koerpergroesse", 170))
+                    break
+            break
+
+    return render(request, 'iot_projekt/mainpage.html', {
+        "arbeitsplaetze": arbeitsplaetze_data,
+        "user_id": user_id,
+        "schreibtischhoehe": schreibtischhoehe
+    })
 
 
 
