@@ -10,7 +10,7 @@ from datetime import datetime
 from django.contrib import messages
 
 from .led_control import set_led_status
-from .tageslichtsensor.py import start_sensor, stop_sensor
+from .tageslichtsensor import start_sensor, stop_sensor
 
 
 # Pfad zu den JSON-Datenbanken
