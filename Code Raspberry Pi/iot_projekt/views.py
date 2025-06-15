@@ -10,6 +10,7 @@ from datetime import datetime
 from django.contrib import messages
 
 from .led_control import set_led_status
+from .tageslichtsensor.py import start_sensor, stop_sensor
 
 
 # Pfad zu den JSON-Datenbanken
@@ -253,6 +254,8 @@ def arbeitsplatz_buchen(request):
         with open(arbeitsplaetze, "w") as datei:
             json.dump(daten, datei, indent=4)
 
+    start_sensor()
+
     return redirect("hauptseite")
 
 
@@ -317,6 +320,8 @@ def arbeitsplatz_abmelden(request):
 
     with open(arbeitsplaetze, "w") as f:
         json.dump(daten, f, indent=4)
+
+    stop_sensor()
 
     return redirect("hauptseite")
 
