@@ -6,7 +6,11 @@
             "status": "deaktiviert",
             "gpio_red": 17,
             "gpio_green": 27,
-            "user_id": null
+            "user_id": null,
+            "luxsensor": {
+                "i2c_bus": 1,
+                "i2c_address": 35
+            }
         },
         {
             "id": "desk-02",
@@ -14,7 +18,11 @@
             "status": "deaktiviert",
             "gpio_red": 22,
             "gpio_green": 23,
-            "user_id": null
+            "user_id": null,
+            "luxsensor": {
+                "i2c_bus": 1,
+                "i2c_address": 35
+            }
         },
         {
             "id": "desk-03",
@@ -22,7 +30,11 @@
             "status": "deaktiviert",
             "gpio_red": 24,
             "gpio_green": 25,
-            "user_id": null
+            "user_id": null,
+            "luxsensor": {
+                "i2c_bus": 1,
+                "i2c_address": 35
+            }
         },
         {
             "id": "desk-04",
@@ -30,7 +42,11 @@
             "status": "deaktiviert",
             "gpio_red": 5,
             "gpio_green": 6,
-            "user_id": null
+            "user_id": null,
+            "luxsensor": {
+                "i2c_bus": 1,
+                "i2c_address": 35
+            }
         },
         {
             "id": "desk-05",
@@ -38,7 +54,11 @@
             "status": "deaktiviert",
             "gpio_red": 12,
             "gpio_green": 13,
-            "user_id": null
+            "user_id": null,
+            "luxsensor": {
+                "i2c_bus": 1,
+                "i2c_address": 35
+            }
         },
         {
             "id": "desk-06",
@@ -62,22 +82,6 @@
             "status": "deaktiviert",
             "gpio_red": 21,
             "gpio_green": 18,
-            "user_id": null
-        },
-        {
-            "id": "desk-09",
-            "name": "Arbeitsplatz 9",
-            "status": "deaktiviert",
-            "gpio_red": 4,
-            "gpio_green": 17,
-            "user_id": null
-        },
-        {
-            "id": "desk-10",
-            "name": "Arbeitsplatz 10",
-            "status": "deaktiviert",
-            "gpio_red": 27,
-            "gpio_green": 22,
             "user_id": null
         }
     ]
