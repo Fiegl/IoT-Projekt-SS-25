@@ -1,16 +1,4 @@
 {
     "users": [
-        {
-            "id": "3fcb86bb-b1df-46dd-b2ee-2688450fdeb4",
-            "username": "Stefan",
-            "email": "Stefan.Fiegl@gmx.de",
-            "password": "pbkdf2_sha256$1000000$vUWNZXdnqBuoOfNDvjXzvt$QhAy4Svq5etvXzS6JNAaahC/uNhDYPbaezScD+9NU1s="
-        },
-        {
-            "id": "885405f7-7d06-48c0-b60e-0ed0ef1341e8",
-            "username": "Stefan100",
-            "email": "Stefan.Fiegl@gmx.de",
-            "password": "pbkdf2_sha256$1000000$9cJiFPORJtc7eSuIDDaqP5$ATNtIpisWXEqgF08AAoou7iWVB0nA01WglR5uY041sY="
-        }
     ]
 }
