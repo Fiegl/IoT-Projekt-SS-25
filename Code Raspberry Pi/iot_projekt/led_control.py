@@ -1,11 +1,19 @@
 import RPi.GPIO as GPIO
 
+
+#Setmode einstellen
+
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
+
+#Setup einstellen
 
 def setup_pins(red_pin, green_pin):
     GPIO.setup(red_pin, GPIO.OUT)
     GPIO.setup(green_pin, GPIO.OUT)
+
+
+#Funktionen für Diode
 
 def led_off(red_pin, green_pin):
     GPIO.output(red_pin, GPIO.LOW)
@@ -19,6 +27,9 @@ def led_green(red_pin, green_pin):
     GPIO.output(red_pin, GPIO.LOW)
     GPIO.output(green_pin, GPIO.HIGH)
 
+
+#Funktion für views.py
+
 def set_led_status(gpio_red, gpio_green, status):
     setup_pins(gpio_red, gpio_green)
 
@@ -28,5 +39,4 @@ def set_led_status(gpio_red, gpio_green, status):
         led_red(gpio_red, gpio_green)
     else:
         led_off(gpio_red, gpio_green)
-
 
