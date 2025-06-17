@@ -1,16 +1,18 @@
 import json, csv
 import uuid
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.mail import send_mail                                      #wird f�r Passwort zur�cksetzen ben�tigt
 from functools import wraps                                                 #wird f�r den Decorator ben�tigt
 from django.views.decorators.cache import never_cache                       #verhindert den Cache
 from datetime import datetime
 from django.contrib import messages
+from django.views.decorators.http import require_GET
 
 from .led_control import set_led_status
-from .tageslichtsensor import start_sensor, stop_sensor
+from .tageslichtsensor import start_sensor, stop_sensor, get_luxwert
+
 
 
 # Pfad zu den JSON-Datenbanken
@@ -191,7 +193,6 @@ def hauptseite(request):
     user_id = request.session.get("user_id")
     schreibtischhoehe = None
 
-    #hier kommt die importierte GPIO-Fuktion!!!
     for arbeitsplatz in arbeitsplaetze_data:
         if "gpio_red" in arbeitsplatz and "gpio_green" in arbeitsplatz:
             set_led_status(
@@ -200,7 +201,6 @@ def hauptseite(request):
                 arbeitsplatz["status"]
             )
 
-    #Schreibtischhöhe berechnen, wenn der User angemeldet ist
     for arbeitsplatz in arbeitsplaetze_data:
         if arbeitsplatz["user_id"] == user_id:
             for user in users:
@@ -210,12 +210,29 @@ def hauptseite(request):
             break
 
     return render(request, 'iot_projekt/mainpage.html', {
-        "arbeitsplaetze": arbeitsplaetze_data,
+        "arbeitsplaetze_list": arbeitsplaetze_data,               #für Django-Schleife auf mainpage.html
+        "arbeitsplaetze_json": json.dumps(arbeitsplaetze_data),   #für JavaScript auf mainpage.html
         "user_id": user_id,
         "schreibtischhoehe": schreibtischhoehe
     })
 
 
+
+@require_GET                #hier haben wir ein REST-API:-)
+@login_required
+def luxwert_aktuell(request):
+    user_id = request.session.get("user_id")
+
+    with open(arbeitsplaetze, "r") as file:
+        daten = json.load(file)
+
+    for ap in daten["arbeitsplaetze"]:
+        if ap.get("user_id") == user_id and ap.get("status") == "belegt":
+            ap_id = ap["id"]
+            lux = get_luxwert(ap_id)
+            return JsonResponse({"lux": lux})
+
+    return JsonResponse({"lux": "kein Sensor angeschlossen"})
 
 
 
@@ -247,14 +264,17 @@ def arbeitsplatz_buchen(request):
             if arbeitsplatz["id"] == desk_id and arbeitsplatz["status"] == "frei":
                 arbeitsplatz["status"] = "belegt"
                 arbeitsplatz["user_id"] = request.session.get("user_id")
-                arbeitsplatz["startzeit"] = start  # Speichern der Startzeit
-                arbeitsplatz["endzeit"] = ende    # Speichern der Endzeit
+                arbeitsplatz["startzeit"] = start
+                arbeitsplatz["endzeit"] = ende
+
+                if "luxsensor" in arbeitsplatz:
+                    sensor_info = arbeitsplatz["luxsensor"]
+                    start_sensor(arbeitsplatz["id"], sensor_info["i2c_bus"], sensor_info["i2c_address"])
                 break
+
 
         with open(arbeitsplaetze, "w") as datei:
             json.dump(daten, datei, indent=4)
-
-    start_sensor()
 
     return redirect("hauptseite")
 
@@ -280,7 +300,10 @@ def arbeitsplatz_abmelden(request):
             endzeit = arbeitsplatz.get("endzeit")
             arbeitsplatz.pop("startzeit", None)
             arbeitsplatz.pop("endzeit", None)
-            break
+
+            if "luxsensor" in arbeitsplatz:
+                stop_sensor(arbeitsplatz["id"])
+            break  
 
     if desk_id and startzeit and endzeit:
         try:
@@ -320,8 +343,6 @@ def arbeitsplatz_abmelden(request):
 
     with open(arbeitsplaetze, "w") as f:
         json.dump(daten, f, indent=4)
-
-    stop_sensor()
 
     return redirect("hauptseite")
 
