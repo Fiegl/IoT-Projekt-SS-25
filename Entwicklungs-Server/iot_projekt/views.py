@@ -1,19 +1,24 @@
-import json
+import json, csv
 import uuid
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.hashers import make_password, check_password
-from functools import wraps #wird f�r den Decorator ben�tigt
-from django.views.decorators.cache import never_cache #verhindert den Cache
+from django.core.mail import send_mail                                      #wird f�r Passwort zur�cksetzen ben�tigt
+from functools import wraps                                                 #wird f�r den Decorator ben�tigt
+from django.views.decorators.cache import never_cache                       #verhindert den Cache
 from datetime import datetime
 from django.contrib import messages
+from django.views.decorators.http import require_GET
 
-from .led_control import set_led_status
+#from .led_control import set_led_status
+#from .tageslichtsensor import start_sensor, stop_sensor, get_luxwert
+
 
 
 # Pfad zu den JSON-Datenbanken
 
 registrierte_benutzer = "/var/www/django-project/datenbank/users.json"
+reset_tokens = "/var/www/django-project/datenbank/reset_tokens.json"
 arbeitsplaetze = "/var/www/django-project/datenbank/arbeitsplaetze.json"
 rechnungsbelege = "/var/www/django-project/datenbank/rechnungsbelege.json"
 
@@ -84,11 +89,93 @@ def start(request):
 def logout_view(request):
     request.session.flush()
     return redirect("start")
-    
 
 def berechne_schreibtischhoehe(koerpergroesse_cm):
     return round(koerpergroesse_cm * 0.4)
+
     
+    
+#Hier sind die Funktionen f�r das Passwort zur�cksetzen (SMTP GMAIL, siehe settings.py)
+
+
+def load_reset_tokens():
+    try:
+        with open(reset_tokens, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError:
+        return {}
+
+def save_reset_tokens(tokens):
+    with open(reset_tokens, "w") as f:
+        json.dump(tokens, f, indent=4)
+
+
+def passwort_vergessen(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+
+        with open(registrierte_benutzer, "r") as file:
+            data = json.load(file)
+
+        for user in data["users"]:
+            if user["email"] == email:
+                token = str(uuid.uuid4())
+                tokens = load_reset_tokens()
+                tokens[token] = user["username"]
+                save_reset_tokens(tokens)
+
+                reset_link = request.build_absolute_uri(f"/passwort_zuruecksetzen/{token}/")
+
+                send_mail(
+                    'Passwort zur�cksetzen � Desk-Share-Lock',
+                    f'Hallo {user["username"]},\n\nHier ist dein Link:\n{reset_link}',
+                    'deinemail@gmail.com',
+                    [email],
+                    fail_silently=False,
+                )
+
+                return HttpResponse("E-Mail wurde versendet.")
+        
+        return HttpResponse("E-Mail nicht gefunden.")
+
+    return render(request, 'iot_projekt/passwort_vergessen.html')
+    
+    
+    
+    
+def passwort_zuruecksetzen(request, token):
+    tokens = load_reset_tokens()
+    username = tokens.get(token)
+
+    if not username:
+        return HttpResponse("Ung�ltiger oder abgelaufener Link.")
+
+    if request.method == "POST":
+        neues_passwort = request.POST.get("passwort")
+        neues_hash = make_password(neues_passwort)
+
+        with open(registrierte_benutzer, "r") as file:
+            data = json.load(file)
+
+        for user in data["users"]:
+            if user["username"] == username:
+                user["password"] = neues_hash
+                break
+
+        with open(registrierte_benutzer, "w") as file:
+            json.dump(data, file, indent=4)
+
+        # Token l�schen
+        del tokens[token]
+        save_reset_tokens(tokens)
+
+        return HttpResponse("Passwort erfolgreich ge�ndert!")
+
+    return render(request, 'iot_projekt/passwort_zuruecksetzen.html', {"token": token})
+
+
 
 #Hier die Funktion f�r die MainPage
 @never_cache
@@ -104,8 +191,15 @@ def hauptseite(request):
         users = json.load(file)["users"]
 
     user_id = request.session.get("user_id")
-
     schreibtischhoehe = None
+
+    #for arbeitsplatz in arbeitsplaetze_data:
+        #if "gpio_red" in arbeitsplatz and "gpio_green" in arbeitsplatz:
+            #set_led_status(
+                #arbeitsplatz["gpio_red"],
+                #arbeitsplatz["gpio_green"],
+                #arbeitsplatz["status"]
+            #)
 
     for arbeitsplatz in arbeitsplaetze_data:
         if arbeitsplatz["user_id"] == user_id:
@@ -116,11 +210,29 @@ def hauptseite(request):
             break
 
     return render(request, 'iot_projekt/mainpage.html', {
-        "arbeitsplaetze": arbeitsplaetze_data,
+        "arbeitsplaetze_list": arbeitsplaetze_data,               #für Django-Schleife auf mainpage.html
+        "arbeitsplaetze_json": json.dumps(arbeitsplaetze_data),   #für JavaScript auf mainpage.html
         "user_id": user_id,
         "schreibtischhoehe": schreibtischhoehe
     })
 
+
+
+@require_GET                #hier haben wir ein REST-API:-)
+@login_required
+def luxwert_aktuell(request):
+    user_id = request.session.get("user_id")
+
+    with open(arbeitsplaetze, "r") as file:
+        daten = json.load(file)
+
+    for ap in daten["arbeitsplaetze"]:
+        if ap.get("user_id") == user_id and ap.get("status") == "belegt":
+            ap_id = ap["id"]
+            lux = get_luxwert(ap_id)
+            return JsonResponse({"lux": lux})
+
+    return JsonResponse({"lux": "kein Sensor angeschlossen"})
 
 
 
@@ -128,8 +240,8 @@ def hauptseite(request):
 
 #Hier kommen die Funktionen f�r die An- und Abmeldung des Arbeitsplatzes
 
-
-
+@never_cache
+@login_required
 def arbeitsplatz_buchen(request):
     if request.method == "POST":
         desk_id = request.POST.get("desk_id")
@@ -152,9 +264,14 @@ def arbeitsplatz_buchen(request):
             if arbeitsplatz["id"] == desk_id and arbeitsplatz["status"] == "frei":
                 arbeitsplatz["status"] = "belegt"
                 arbeitsplatz["user_id"] = request.session.get("user_id")
-                arbeitsplatz["startzeit"] = start  # Speichern der Startzeit
-                arbeitsplatz["endzeit"] = ende    # Speichern der Endzeit
+                arbeitsplatz["startzeit"] = start
+                arbeitsplatz["endzeit"] = ende
+
+                if "luxsensor" in arbeitsplatz:
+                    sensor_info = arbeitsplatz["luxsensor"]
+                    start_sensor(arbeitsplatz["id"], sensor_info["i2c_bus"], sensor_info["i2c_address"])
                 break
+
 
         with open(arbeitsplaetze, "w") as datei:
             json.dump(daten, datei, indent=4)
@@ -183,7 +300,10 @@ def arbeitsplatz_abmelden(request):
             endzeit = arbeitsplatz.get("endzeit")
             arbeitsplatz.pop("startzeit", None)
             arbeitsplatz.pop("endzeit", None)
-            break
+
+            if "luxsensor" in arbeitsplatz:
+                stop_sensor(arbeitsplatz["id"])
+            break  
 
     if desk_id and startzeit and endzeit:
         try:
@@ -247,10 +367,44 @@ def buchungsuebersicht(request):
 
     return render(request, "iot_projekt/buchungsuebersicht.html", {"buchungen": buchungen})
 
+# Funktion als CSV-Download
+
+@login_required
+def download_als_csv(request):
+    username = request.session.get("username")
+
+    try:
+        with open(rechnungsbelege, "r") as file:
+            daten = json.load(file)
+            user_buchungen = [
+                buchung for buchung in daten.get("buchungen", [])
+                if buchung.get("benutzer") == username
+            ]
+    except FileNotFoundError:
+        user_buchungen = []
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="buchungen.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Benutzer', 'Arbeitsplatz', 'Startzeit', 'Endzeit', 'Dauer (Minuten)'])
+
+    for buchung in user_buchungen:
+        writer.writerow([
+            buchung.get("benutzer", username),
+            buchung.get("arbeitsplatz_id", ""),
+            buchung.get("startzeit", ""),
+            buchung.get("endzeit", ""),
+            buchung.get("dauer_minuten", "")
+        ])
+
+    return response
+
+
+
 
 # Funktion zum Passwort ändern
 
-@login_required
 @login_required
 def passwort_aendern(request):
     if request.method == "POST":
@@ -288,20 +442,35 @@ def profil_loeschen(request):
     username = request.session.get("username")
 
     try:
+        #Benutzer löschen
         with open(registrierte_benutzer, "r") as file:
             data = json.load(file)
 
         neue_liste = [user for user in data["users"] if user["username"] != username]
-
         data["users"] = neue_liste
 
         with open(registrierte_benutzer, "w") as file:
             json.dump(data, file, indent=4)
 
+        #Buchungen löschen
+        try:
+            with open(rechnungsbelege, "r") as f:
+                belege = json.load(f)
+                neue_buchungen = [
+                    buchung for buchung in belege.get("buchungen", [])
+                    if buchung.get("benutzer") != username
+                ]
+                belege["buchungen"] = neue_buchungen
+
+            with open(rechnungsbelege, "w") as f:
+                json.dump(belege, f, indent=4)
+
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
+
     except Exception as e:
         return HttpResponse("Fehler beim Löschen des Profils: " + str(e))
 
-    # Session löschen
     request.session.flush()
     return redirect("start")
 
