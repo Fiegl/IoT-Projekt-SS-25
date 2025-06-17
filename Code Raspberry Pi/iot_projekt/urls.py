@@ -13,4 +13,6 @@ urlpatterns = [
     path('buchungsuebersicht', views.buchungsuebersicht, name='buchungsuebersicht'),
     path('passwort_aendern', views.passwort_aendern, name='passwort_aendern'),
     path("profil_loeschen/", views.profil_loeschen, name="profil_loeschen"),
+    path('download_als_csv/', views.download_als_csv, name='download_als_csv'),
+    path("luxwert/", views.luxwert_aktuell, name="luxwert"),
 ]
