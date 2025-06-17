@@ -85,3 +85,40 @@ body.mainpage {
 .dropdown-content a:hover {
     background-color: #ddd;
 }
+
+.lux-anzeige {
+    margin-top: 10px;
+    font-size: 1em;
+}
+
+#map {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 400px;
+    height: 300px;
+    z-index: 1;
+    border: 2px solid #444;
+    border-radius: 8px;
+}
+
+.startpunkt-eingabe {
+    position: absolute;
+    top: 320px;
+    left: 10px;
+    z-index: 2;
+    background: white;
+    padding: 8px;
+    border-radius: 5px;
+    box-shadow: 0 0 5px gray;
+}
+
+.arbeitsplatz-container {
+    margin-left: 430px;
+}
+
+.lux-anzeige {
+    margin-top: 10px;
+    font-size: 1em;
+}
+
