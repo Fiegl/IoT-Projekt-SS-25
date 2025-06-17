@@ -1,46 +1,88 @@
 {
     "arbeitsplaetze": [
-      {
-        "id": "desk-01",
-        "name": "Arbeitsplatz 1",
-        "status": "deaktiviert",
-        "gpio_pin": 17,
-        "user_id": null
-      },
-      {
-        "id": "desk-02",
-        "name": "Arbeitsplatz 2",
-        "status": "deaktiviert",
-        "gpio_pin": 27,
-        "user_id": null
-      },
-      {
-        "id": "desk-03",
-        "name": "Arbeitsplatz 3",
-        "status": "deaktiviert",
-        "gpio_pin": 22,
-        "user_id": null
-      },
-      {
-        "id": "desk-04",
-        "name": "Arbeitsplatz 4",
-        "status": "deaktiviert",
-        "gpio_pin": 23,
-        "user_id": null
-      },
-      {
-        "id": "desk-05",
-        "name": "Arbeitsplatz 5",
-        "status": "deaktiviert",
-        "gpio_pin": 24,
-        "user_id": null
-      },
-      {
-        "id": "desk-06",
-        "name": "Arbeitsplatz 6",
-        "status": "deaktiviert",
-        "gpio_pin": 25,
-        "user_id": null
-      }
+        {
+            "id": "desk-01",
+            "name": "Arbeitsplatz 1",
+            "status": "deaktiviert",
+            "gpio_red": 17,
+            "gpio_green": 27,
+            "user_id": null,
+            "luxsensor": {
+                "i2c_bus": 1,
+                "i2c_address": 35
+            }
+        },
+        {
+            "id": "desk-02",
+            "name": "Arbeitsplatz 2",
+            "status": "deaktiviert",
+            "gpio_red": 22,
+            "gpio_green": 23,
+            "user_id": null,
+            "luxsensor": {
+                "i2c_bus": 1,
+                "i2c_address": 35
+            }
+        },
+        {
+            "id": "desk-03",
+            "name": "Arbeitsplatz 3",
+            "status": "deaktiviert",
+            "gpio_red": 24,
+            "gpio_green": 25,
+            "user_id": null,
+            "luxsensor": {
+                "i2c_bus": 1,
+                "i2c_address": 35
+            }
+        },
+        {
+            "id": "desk-04",
+            "name": "Arbeitsplatz 4",
+            "status": "deaktiviert",
+            "gpio_red": 5,
+            "gpio_green": 6,
+            "user_id": null,
+            "luxsensor": {
+                "i2c_bus": 1,
+                "i2c_address": 35
+            }
+        },
+        {
+            "id": "desk-05",
+            "name": "Arbeitsplatz 5",
+            "status": "deaktiviert",
+            "gpio_red": 12,
+            "gpio_green": 13,
+            "user_id": null,
+            "luxsensor": {
+                "i2c_bus": 1,
+                "i2c_address": 35
+            }
+        },
+        {
+            "id": "desk-06",
+            "name": "Arbeitsplatz 6",
+            "status": "deaktiviert",
+            "gpio_red": 19,
+            "gpio_green": 26,
+            "user_id": null
+        },
+        {
+            "id": "desk-07",
+            "name": "Arbeitsplatz 7",
+            "status": "deaktiviert",
+            "gpio_red": 16,
+            "gpio_green": 20,
+            "user_id": null
+        },
+        {
+            "id": "desk-08",
+            "name": "Arbeitsplatz 8",
+            "status": "deaktiviert",
+            "gpio_red": 21,
+            "gpio_green": 18,
+            "user_id": null
+        }
     ]
-  }
+}
