@@ -6,9 +6,17 @@
     <meta charset="UTF-8">
     <title>Desk-Share-Lock</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <script
+        src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.1/mapbox-gl-directions.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.1/mapbox-gl-directions.css"
+        rel="stylesheet" />
 </head>
 
 <body class="mainpage">
+
+    <div id="map"></div>
 
     <form action="{% url 'logout' %}" method="post" class="logout-form">
         {% csrf_token %}
@@ -26,7 +34,6 @@
                 <a href="{% url 'buchungsuebersicht' %}">Buchungsübersicht</a>
                 <a href="{% url 'passwort_aendern' %}">Passwort ändern</a>
                 <a href="{% url 'profil_loeschen' %}">Profil löschen</a>
-
             </div>
         </div>
     </header>
@@ -36,9 +43,8 @@
     <h3>Hier können Sie einen freien Arbeitsplatz auswählen</h3>
 
     <div class="arbeitsplatz-container">
-
-        {% for arbeitsplatz in arbeitsplaetze %}
-        <details class="arbeitsplatz-details">
+        {% for arbeitsplatz in arbeitsplaetze_list %}
+        <details class="arbeitsplatz-details" id="arbeitsplatz-{{ arbeitsplatz.id }}">
             <summary class="arbeitsplatz-btn">{{ arbeitsplatz.name }}</summary>
 
             {% if arbeitsplatz.status == "frei" %}
@@ -47,10 +53,8 @@
                 {% csrf_token %}
                 <label for="start">Belegen von:</label>
                 <input type="datetime-local" name="start_datetime" required>
-
                 <label for="ende">Belegen bis:</label>
                 <input type="datetime-local" name="ende_datetime" required>
-
                 <input type="hidden" name="desk_id" value="{{ arbeitsplatz.id }}">
                 <button type="submit">Belegen</button>
             </form>
@@ -68,6 +72,7 @@
                 {% endif %}
                 <button type="submit">Abmelden</button>
             </form>
+            <p id="luxwert-{{ arbeitsplatz.id }}" class="lux-anzeige">Luxwert: wird geladen...</p>
             {% endif %}
 
             {% elif arbeitsplatz.status == "deaktiviert" %}
@@ -76,19 +81,73 @@
             {% endif %}
         </details>
         {% endfor %}
-
     </div>
 
     <script>
-        function toggleDropdown() {
-            var content = document.getElementById("dropdownContent");
-            if (content.style.display === "block") {
-                content.style.display = "none";
-            } else {
-                content.style.display = "block";
+        const userId = "{{ user_id }}";
+        const arbeitsplaetze = JSON.parse('{{ arbeitsplaetze_json|safe|escapejs }}');
+        const ziele = {
+            "desk-01": [9.18358, 48.90730],
+            "desk-02": [9.18358, 48.90730],
+            "desk-03": [9.18193, 48.89312],
+            "desk-04": [9.18193, 48.89312],
+            "desk-05": [9.16921, 48.89210],
+            "desk-06": [9.16921, 48.89210],
+            "desk-07": [9.16651, 48.78209],
+            "desk-08": [9.16651, 48.78209],
+        };
+
+        mapboxgl.accessToken = 'pk.eyJ1Ijoic29sZGllcmJveSIsImEiOiJjbWJ4cHZ1czMxM3U4MmxzOGhzcjJtYnByIn0.rONE98g2NxMNnpxWUD5P7w';
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: [9.18, 48.89],
+            zoom: 12
+        });
+
+        const directions = new MapboxDirections({ accessToken: mapboxgl.accessToken });
+        map.addControl(directions, 'top-left');
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const eigenerPlatz = arbeitsplaetze.find(p => p.user_id === userId && p.status === "belegt");
+            if (eigenerPlatz && ziele[eigenerPlatz.id]) {
+                directions.setDestination(ziele[eigenerPlatz.id]);
             }
-        }           
+
+            for (const platz of arbeitsplaetze) {
+                if (platz.user_id === userId && platz.status === "belegt") {
+                    starteLuxAbfrage(platz.id);
+                }
+            }
+        });
+
+        function starteLuxAbfrage(deskId) {
+            setInterval(() => {
+                fetch(`/luxwert/?desk_id=${deskId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const anzeige = document.getElementById("luxwert-" + deskId);
+                        if (anzeige) {
+                            if (typeof data.lux === "string") {
+                                anzeige.innerText = data.lux; 
+                            } else {
+                                anzeige.innerText = "Luxwert: " + data.lux + " Lux";
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Luxwert-Fehler:", error);
+                    });
+            }, 10000);
+        }
+
+
+        function toggleDropdown() {
+            const content = document.getElementById("dropdownContent");
+            content.style.display = content.style.display === "block" ? "none" : "block";
+        }
     </script>
+
 </body>
 
 </html>
