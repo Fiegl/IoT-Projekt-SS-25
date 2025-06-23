@@ -191,15 +191,8 @@ def hauptseite(request):
         users = json.load(file)["users"]
 
     user_id = request.session.get("user_id")
-    schreibtischhoehe = None
 
-    #for arbeitsplatz in arbeitsplaetze_data:
-        #if "gpio_red" in arbeitsplatz and "gpio_green" in arbeitsplatz:
-            #set_led_status(
-                #arbeitsplatz["gpio_red"],
-                #arbeitsplatz["gpio_green"],
-                #arbeitsplatz["status"]
-            #)
+    schreibtischhoehe = None
 
     for arbeitsplatz in arbeitsplaetze_data:
         if arbeitsplatz["user_id"] == user_id:
@@ -210,11 +203,11 @@ def hauptseite(request):
             break
 
     return render(request, 'iot_projekt/mainpage.html', {
-        "arbeitsplaetze_list": arbeitsplaetze_data,               #für Django-Schleife auf mainpage.html
-        "arbeitsplaetze_json": json.dumps(arbeitsplaetze_data),   #für JavaScript auf mainpage.html
-        "user_id": user_id,
-        "schreibtischhoehe": schreibtischhoehe
-    })
+    "arbeitsplaetze_list": arbeitsplaetze_data,
+    "arbeitsplaetze_json": json.dumps(arbeitsplaetze_data),  # für JavaScript
+    "user_id": user_id,
+    "schreibtischhoehe": schreibtischhoehe
+})
 
 
 
