@@ -1,37 +1,54 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
-    <head>
-        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-        <title>Desk-Share-Lock</title>
-    </head>
-    <body class="mainpage">
-        <form action="{% url 'logout' %}" method="post" class="logout-form">
-            {% csrf_token %}
-            <button type="submit" class="logout-button">Ausloggen</button>
-        </form> 
-        <img src="{% static 'desksharelock.jpg' %}" alt="Logo" id="desksharelock">
-        <h1>Desk-Share-Lock</h1><br><br>
-        <button type="button" onclick="history.back()">Zurück</button><br>     
-        <h3>Deine Buchungsübersicht</h3>
-        <table>
-            <tr>
-                <th>Startzeit</th>
-                <th>Endzeit</th>
-                <th>Arbeitsplatz</th>
-                <th>Download</th>  
-            </tr>
-            {% for buchung in buchungen %}
-            <tr>
-                <td>{{ buchung.startzeit }}</td>
-                <td>{{ buchung.endzeit }}</td>
-                <td>{{ buchung.arbeitsplatz_id }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="3">Keine Buchungen gefunden.</td>
-            </tr>
-            {% endfor %}
-        </table>
-    </body>
+
+<head>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Desk-Share-Lock</title>
+</head>
+
+<body class="mainpage">
+    <form action="{% url 'logout' %}" method="post" class="logout-form">
+        {% csrf_token %}
+        <button type="submit" class="logout-button">Ausloggen</button>
+    </form>
+    <img src="{% static 'css/desksharelock.jpg' %}" alt="Logo" id="desksharelock">
+    <h1>Desk-Share-Lock</h1><br><br>
+    <button type="button" onclick="history.back()">Zurück</button><br>    
+    <h3>Deine Buchungsübersicht</h3>
+    <table>
+        <tr>
+            <th>Benutzer</th>
+            <th>Startzeit</th>
+            <th>Endzeit</th>
+            <th>Arbeitsplatz</th>
+            <th>Download</th>
+        </tr>
+        {% for buchung in buchungen %}
+        <tr>
+            <td>{{ buchung.benutzer }}</td>
+            <td>{{ buchung.startzeit }}</td>
+            <td>{{ buchung.endzeit }}</td>
+            <td>{{ buchung.arbeitsplatz_id }}</td>
+            <td>
+                <form method="get" action="{% url 'download_als_csv' %}">
+                    <input type="hidden" name="benutzer" value="{{ buchung.benutzer }}">
+                    <input type="hidden" name="startzeit" value="{{ buchung.startzeit }}">
+                    <input type="hidden" name="endzeit" value="{{ buchung.endzeit }}">
+                    <input type="hidden" name="arbeitsplatz_id" value="{{ buchung.arbeitsplatz_id }}">
+                    <input type="hidden" name="benutzer" value="{{ buchung.benutzer }}">
+                    <button type="submit">CSV</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">Keine Buchungen gefunden.</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+</body>
+
 </html>
