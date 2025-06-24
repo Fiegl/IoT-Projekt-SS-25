@@ -369,33 +369,49 @@ def buchungsuebersicht(request):
 
 # Funktion als CSV-Download
 
+@never_cache
 @login_required
 def download_als_csv(request):
+    import csv
+    from django.http import HttpResponse
+
+    buchung_id = request.GET.get("buchung_id")
     username = request.session.get("username")
 
-    try:
-        with open(rechnungsbelege, "r") as file:
-            daten = json.load(file)
-            user_buchungen = [
-                buchung for buchung in daten.get("buchungen", [])
-                if buchung.get("benutzer") == username
-            ]
-    except FileNotFoundError:
-        user_buchungen = []
+    with open(rechnungsbelege, "r") as f:
+        daten = json.load(f)
 
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="buchungen.csv"'
+    # Nur die Buchungen des eingeloggten Benutzers
+    user_buchungen = [
+        b for b in daten.get("buchungen", [])
+        if b.get("benutzer") == username
+    ]
+
+    if buchung_id:
+        # Nur eine bestimmte Buchung exportieren
+        buchung = next((b for b in user_buchungen if b.get("id") == buchung_id), None)
+        if not buchung:
+            return HttpResponse("Buchung nicht gefunden.", status=404)
+        buchungen = [buchung]
+        filename = f"buchung_{buchung_id}.csv"
+    else:
+        # Alle Buchungen des Users
+        buchungen = user_buchungen
+        filename = f"buchungen_{username}.csv"
+
+    # CSV erzeugen
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
     writer = csv.writer(response)
-    writer.writerow(['Benutzer', 'Arbeitsplatz', 'Startzeit', 'Endzeit', 'Dauer (Minuten)'])
-
-    for buchung in user_buchungen:
+    writer.writerow(["Benutzer", "Startzeit", "Endzeit", "Arbeitsplatz", "Dauer (Minuten)"])
+    for b in buchungen:
         writer.writerow([
-            buchung.get("benutzer", username),
-            buchung.get("arbeitsplatz_id", ""),
-            buchung.get("startzeit", ""),
-            buchung.get("endzeit", ""),
-            buchung.get("dauer_minuten", "")
+            b.get("benutzer"),
+            b.get("startzeit"),
+            b.get("endzeit"),
+            b.get("arbeitsplatz_id"),
+            b.get("dauer_minuten", "")
         ])
 
     return response
