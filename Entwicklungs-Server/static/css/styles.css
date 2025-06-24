@@ -5,21 +5,25 @@ body.start {
     background-position: center;
     background-repeat: no-repeat;
 }
+
 h1 {
     font-family: "Edwardian Script ITC";
     font-size: 320%;
 }
+
 #desksharelock {
     width: 180px;
     height: auto;
 }
+
 body.mainpage {
     text-align: center;
     background-image: linear-gradient(to bottom, white, rgba(255, 255, 255, 0) 30%), url("../css/background.jpg");
-    background-size: cover; 
-    background-position: center top 170px; /* Lässt oben Platz */
+    background-size: cover;
+    background-position: center top 170px;
     background-repeat: no-repeat;
 }
+
 .arbeitsplatz-container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -27,6 +31,7 @@ body.mainpage {
     justify-content: center;
     padding: 50px;
 }
+
 .arbeitsplatz-btn {
     position: relative;
     font-size: 15px;
@@ -35,9 +40,10 @@ body.mainpage {
     background-size: cover;
     font-family: "Garamond", serif;
     font-size: 20px;
-    color: #fff8dc; /* Helle Farbe für gute Lesbarkeit */
+    color: #fff8dc;
     text-shadow: 1px 1px 2px black;
 }
+
 .arbeitsplatz-btn .stempelgruen {
     position: absolute;
     width: 45px;
@@ -47,11 +53,13 @@ body.mainpage {
     bottom: 0px;
     object-fit: contain;
 }
+
 .logout-button {
     position: absolute;
     top: 20px;
     right: 20px;
 }
+
 .dropdown {
     position: relative;
     display: inline-block;
@@ -70,7 +78,7 @@ body.mainpage {
     left: 0;
     right: auto;
     background-color: #f1f1f1;
-    box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
     z-index: 1;
     flex-direction: column;
 }
@@ -79,7 +87,7 @@ body.mainpage {
     color: black;
     padding: 12px 16px;
     text-decoration: none;
-    display: block; 
+    display: block;
 }
 
 .dropdown-content a:hover {
@@ -117,12 +125,186 @@ body.mainpage {
 .lux-anzeige {
     margin-top: 10px;
     font-size: 1em;
+
 }
 
-table, th, td {
+table {
     width: 50%;
     margin: auto;
-    border: 2px solid black;
     border-collapse: collapse;
+}
+
+th,
+td {
+    border: 2px solid black;
     background-color: beige;
+    padding: 8px;
+    text-align: center;
+}
+
+
+
+/* Smartphones (max. 600px) */
+@media screen and (max-width: 600px) {
+
+    body.mainpage,
+    .login-container,
+    .register-container {
+        padding: 10px;
+        font-size: 16px;
+    }
+
+    img#desksharelock {
+        width: 100%;
+        height: auto;
+        max-width: 300px;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .login-container,
+    .register-container {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        border: none;
+    }
+
+    .login-container h2,
+    .register-container h2 {
+        font-size: 22px;
+        text-align: center;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    input[type="datetime-local"] {
+        width: 100%;
+        font-size: 16px;
+    }
+
+    button {
+        width: 100%;
+        font-size: 16px;
+    }
+
+    .ornament-left,
+    .ornament-right {
+        display: none;
+    }
+
+    .logout-form {
+        text-align: right;
+    }
+
+    h1 {
+        font-size: 24px;
+        text-align: center;
+    }
+
+    .arbeitsplatz-container {
+        grid-template-columns: 1fr;
+        gap: 30px;
+        padding: 20px;
+    }
+
+    .arbeitsplatz-btn {
+        font-size: 16px;
+    }
+
+    .lux-anzeige {
+        font-size: 0.9em;
+    }
+
+    #map {
+        position: static;
+        width: 100%;
+        height: 250px;
+        margin-bottom: 20px;
+    }
+
+    .startpunkt-eingabe {
+        position: static;
+        margin: 10px auto;
+    }
+}
+
+/* Tablets (601px bis 1024px) */
+@media screen and (min-width: 601px) and (max-width: 1024px) {
+
+    body.mainpage,
+    .login-container,
+    .register-container {
+        padding: 20px;
+        font-size: 18px;
+    }
+
+    img#desksharelock {
+        width: 80%;
+        height: auto;
+        max-width: 350px;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .arbeitsplatz-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 50px;
+        padding: 30px;
+    }
+
+    .arbeitsplatz-btn {
+        font-size: 18px;
+        padding: 12px;
+    }
+
+    .logout-button {
+        top: 15px;
+        right: 15px;
+        font-size: 16px;
+    }
+
+    h1 {
+        font-size: 36px;
+        text-align: center;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    input[type="datetime-local"] {
+        width: 100%;
+        font-size: 18px;
+    }
+
+    button {
+        font-size: 18px;
+    }
+
+    .lux-anzeige {
+        font-size: 1em;
+    }
+
+    #map {
+        position: relative;
+        width: 100%;
+        height: 300px;
+        margin: 20px auto;
+    }
+
+    .startpunkt-eingabe {
+        position: relative;
+        margin: 10px auto;
+        width: 90%;
+    }
+
+    table {
+        width: 90%;
+    }
+
+    th,
+    td {
+        font-size: 16px;
+    }
 }
