@@ -193,28 +193,42 @@ def hauptseite(request):
     user_id = request.session.get("user_id")
     schreibtischhoehe = None
 
-    for arbeitsplatz in arbeitsplaetze_data:
-        if "gpio_red" in arbeitsplatz and "gpio_green" in arbeitsplatz:
-            set_led_status(
-                arbeitsplatz["gpio_red"],
-                arbeitsplatz["gpio_green"],
-                arbeitsplatz["status"]
-            )
+    #Mapping von user_id auf username vorbereiten
+    user_map = {user["id"]: user["username"] for user in users}
 
+    #Arbeitsplatz-Daten vorbereiten
     for arbeitsplatz in arbeitsplaetze_data:
-        if arbeitsplatz["user_id"] == user_id:
+
+        #Hier wird die GPIO-Funktion (mehrfarbige Diode) angesteuert
+        if "gpio_red" in arbeitsplatz and "gpio_green" in arbeitsplatz:
+            try:
+                set_led_status(
+                    arbeitsplatz["gpio_red"],
+                    arbeitsplatz["gpio_green"],
+                    arbeitsplatz["status"]
+                )
+            except Exception as e:
+                print(f"Fehler bei LED-Steuerung für {arbeitsplatz['id']}: {e}")
+
+        #Benutzername zur Anzeige ergänzen
+        uid = arbeitsplatz.get("user_id")
+        if uid:
+            arbeitsplatz["username"] = user_map.get(uid, "Unbekannt")
+
+        #Aus der eingegebenen Körpgergröße wird die optimale Schreibtischhöhe für den eingeloggten User berechnet
+        if uid == user_id and schreibtischhoehe is None:
             for user in users:
                 if user["id"] == user_id:
                     schreibtischhoehe = berechne_schreibtischhoehe(user.get("koerpergroesse", 170))
                     break
-            break
 
     return render(request, 'iot_projekt/mainpage.html', {
-        "arbeitsplaetze_list": arbeitsplaetze_data,               #für Django-Schleife auf mainpage.html
-        "arbeitsplaetze_json": json.dumps(arbeitsplaetze_data),   #für JavaScript auf mainpage.html
+        "arbeitsplaetze_list": arbeitsplaetze_data,               # für HTML-Schleife
+        "arbeitsplaetze_json": json.dumps(arbeitsplaetze_data),   # für JavaScript
         "user_id": user_id,
         "schreibtischhoehe": schreibtischhoehe
     })
+
 
 
 
@@ -473,6 +487,7 @@ def profil_loeschen(request):
 
     request.session.flush()
     return redirect("start")
+
 
 
 
