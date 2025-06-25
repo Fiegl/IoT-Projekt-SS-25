@@ -310,14 +310,12 @@ def arbeitsplatz_abmelden(request):
             arbeitsplatz["status"] = "frei"
             arbeitsplatz["user_id"] = None
             desk_id = arbeitsplatz["id"]
-            startzeit = arbeitsplatz.get("startzeit")
-            endzeit = arbeitsplatz.get("endzeit")
-            arbeitsplatz.pop("startzeit", None)
-            arbeitsplatz.pop("endzeit", None)
+            startzeit = arbeitsplatz.pop("startzeit", None)
+            endzeit = arbeitsplatz.pop("endzeit", None)
 
             if "luxsensor" in arbeitsplatz:
                 stop_sensor(arbeitsplatz["id"])
-            break  
+            break
 
     if desk_id and startzeit and endzeit:
         try:
@@ -325,18 +323,20 @@ def arbeitsplatz_abmelden(request):
             end_dt = datetime.strptime(endzeit, "%Y-%m-%dT%H:%M")
             dauer = int((end_dt - start_dt).total_seconds() / 60)
         except Exception:
+            start_dt = end_dt = None
             dauer = 0
-            start_dt = None
-            end_dt = None
 
         try:
             with open(rechnungsbelege, "r") as f:
                 belege = json.load(f)
+                if not isinstance(belege, dict):
+                    belege = {}
         except (FileNotFoundError, json.JSONDecodeError):
-            belege = {"buchungen": []}
+            belege = {}
 
+        buchungen = belege.get("buchungen", [])
         if start_dt and end_dt:
-            belege["buchungen"].append({
+            buchungen.append({
                 "id": str(uuid.uuid4()),
                 "benutzer": request.session.get("username"),
                 "arbeitsplatz_id": desk_id,
@@ -344,17 +344,12 @@ def arbeitsplatz_abmelden(request):
                 "endzeit": end_dt.strftime("%Y-%m-%d %H:%M"),
                 "dauer_minuten": dauer
             })
+            belege["buchungen"] = buchungen
 
             with open(rechnungsbelege, "w") as f:
                 json.dump(belege, f, indent=4)
 
-    # Konvertiere datetime-Objekte in allen Arbeitsplätzen zu Strings
-    for arbeitsplatz in daten["arbeitsplaetze"]:
-        if type(arbeitsplatz.get("startzeit")) == datetime:
-            arbeitsplatz["startzeit"] = arbeitsplatz["startzeit"].strftime("%Y-%m-%dT%H:%M")
-        if type(arbeitsplatz.get("endzeit")) == datetime:
-            arbeitsplatz["endzeit"] = arbeitsplatz["endzeit"].strftime("%Y-%m-%dT%H:%M")
-
+    # Speicher aktualisierte Arbeitsplätze
     with open(arbeitsplaetze, "w") as f:
         json.dump(daten, f, indent=4)
 
@@ -503,7 +498,6 @@ def profil_loeschen(request):
 
     request.session.flush()
     return redirect("start")
-
 
 
 
