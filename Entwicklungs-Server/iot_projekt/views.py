@@ -193,21 +193,35 @@ def hauptseite(request):
     user_id = request.session.get("user_id")
     schreibtischhoehe = None
 
-    # Mapping von user_id zu username vorbereiten
+    # Benutzer-ID → Benutzername abbilden
     user_map = {user["id"]: user["username"] for user in users}
 
-    # Benutzernamen zuordnen und Tischhöhe berechnen
     for arbeitsplatz in arbeitsplaetze_data:
         uid = arbeitsplatz.get("user_id")
+
+        # Benutzername ergänzen
         if uid:
             arbeitsplatz["username"] = user_map.get(uid, "Unbekannt")
 
+        # Ort ergänzen anhand der ID
+        arbeitsplatz_id = arbeitsplatz.get("id", "").lower()
+        if arbeitsplatz_id in ("desk-01", "desk-02"):
+            arbeitsplatz["ort"] = "HVF Geb. 6"
+        elif arbeitsplatz_id in ("desk-03", "desk-04"):
+            arbeitsplatz["ort"] = "Bleyle-Areal"
+        elif arbeitsplatz_id in ("desk-05", "desk-06"):
+            arbeitsplatz["ort"] = "Urban Harbor"
+        elif arbeitsplatz_id in ("desk-07", "desk-08"):
+            arbeitsplatz["ort"] = "Studierendenwerk"
+        else:
+            arbeitsplatz["ort"] = "Unbekannt"
+
+        # Schreibtischhöhe für den eingeloggten User berechnen
         if uid == user_id and schreibtischhoehe is None:
             for user in users:
                 if user["id"] == user_id:
                     schreibtischhoehe = berechne_schreibtischhoehe(user.get("koerpergroesse", 170))
                     break
-
     return render(request, 'iot_projekt/mainpage.html', {
         "arbeitsplaetze_list": arbeitsplaetze_data,
         "arbeitsplaetze_json": json.dumps(arbeitsplaetze_data),
