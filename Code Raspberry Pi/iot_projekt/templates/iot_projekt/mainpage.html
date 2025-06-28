@@ -62,7 +62,8 @@
 
             {% elif arbeitsplatz.status == "belegt" %}
             <p>Status: Belegt</p>
-            <p>Benutzer: {{ arbeitsplatz.username}}</p>
+            <p>Benutzer: {{ arbeitsplatz.username }}</p>
+            <p>Ort: {{ arbeitsplatz.ort }}</p>
 
             {% if arbeitsplatz.user_id == user_id %}
             <p id="luxwert-{{ arbeitsplatz.id }}" class="lux-anzeige">Luxwert: wird geladen...</p>
@@ -184,3 +185,4 @@
 </body>
 
 </html>
+
