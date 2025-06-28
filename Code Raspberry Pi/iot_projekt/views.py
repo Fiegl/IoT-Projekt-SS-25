@@ -193,13 +193,37 @@ def hauptseite(request):
     user_id = request.session.get("user_id")
     schreibtischhoehe = None
 
-    #Mapping von user_id auf username vorbereiten
+    # Benutzer-ID → Benutzername abbilden
     user_map = {user["id"]: user["username"] for user in users}
 
-    #Arbeitsplatz-Daten vorbereiten
     for arbeitsplatz in arbeitsplaetze_data:
+        uid = arbeitsplatz.get("user_id")
 
-        #Hier wird die GPIO-Funktion (mehrfarbige Diode) angesteuert
+        # Benutzername ergänzen
+        if uid:
+            arbeitsplatz["username"] = user_map.get(uid, "Unbekannt")
+
+        # Ort ergänzen anhand der ID
+        arbeitsplatz_id = arbeitsplatz.get("id", "").lower()
+        if arbeitsplatz_id in ("desk-01", "desk-02"):
+            arbeitsplatz["ort"] = "HVF Geb. 6"
+        elif arbeitsplatz_id in ("desk-03", "desk-04"):
+            arbeitsplatz["ort"] = "Bleyle-Areal"
+        elif arbeitsplatz_id in ("desk-05", "desk-06"):
+            arbeitsplatz["ort"] = "Urban Harbor"
+        elif arbeitsplatz_id in ("desk-07", "desk-08"):
+            arbeitsplatz["ort"] = "Studierendenwerk"
+        else:
+            arbeitsplatz["ort"] = "Unbekannt"
+
+        # Schreibtischhöhe für den eingeloggten User berechnen
+        if uid == user_id and schreibtischhoehe is None:
+            for user in users:
+                if user["id"] == user_id:
+                    schreibtischhoehe = berechne_schreibtischhoehe(user.get("koerpergroesse", 170))
+                    break
+
+        # Optional: LED setzen
         if "gpio_red" in arbeitsplatz and "gpio_green" in arbeitsplatz:
             try:
                 set_led_status(
@@ -208,26 +232,15 @@ def hauptseite(request):
                     arbeitsplatz["status"]
                 )
             except Exception as e:
-                print(f"Fehler bei LED-Steuerung für {arbeitsplatz['id']}: {e}")
-
-        #Benutzername zur Anzeige ergänzen
-        uid = arbeitsplatz.get("user_id")
-        if uid:
-            arbeitsplatz["username"] = user_map.get(uid, "Unbekannt")
-
-        #Aus der eingegebenen Körpgergröße wird die optimale Schreibtischhöhe für den eingeloggten User berechnet
-        if uid == user_id and schreibtischhoehe is None:
-            for user in users:
-                if user["id"] == user_id:
-                    schreibtischhoehe = berechne_schreibtischhoehe(user.get("koerpergroesse", 170))
-                    break
+                print(f"LED-Fehler für {arbeitsplatz['id']}: {e}")
 
     return render(request, 'iot_projekt/mainpage.html', {
-        "arbeitsplaetze_list": arbeitsplaetze_data,               # für HTML-Schleife
-        "arbeitsplaetze_json": json.dumps(arbeitsplaetze_data),   # für JavaScript
+        "arbeitsplaetze_list": arbeitsplaetze_data,
+        "arbeitsplaetze_json": json.dumps(arbeitsplaetze_data),
         "user_id": user_id,
         "schreibtischhoehe": schreibtischhoehe
     })
+
 
 
 
