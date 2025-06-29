@@ -281,10 +281,10 @@ def arbeitsplatz_buchen(request):
                 arbeitsplatz["startzeit"] = start
                 arbeitsplatz["endzeit"] = ende
 
-                if "luxsensor" in arbeitsplatz:
-                    sensor_info = arbeitsplatz["luxsensor"]
-                    start_sensor(arbeitsplatz["id"], sensor_info["i2c_bus"], sensor_info["i2c_address"])
-                break
+                #if "luxsensor" in arbeitsplatz:
+                    #sensor_info = arbeitsplatz["luxsensor"]
+                    #start_sensor(arbeitsplatz["id"], sensor_info["i2c_bus"], sensor_info["i2c_address"])
+                #break
 
 
         with open(arbeitsplaetze, "w") as datei:
