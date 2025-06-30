@@ -54,6 +54,17 @@ body.mainpage {
     object-fit: contain;
 }
 
+.badge {
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-weight: bold;
+  color: white;
+}
+
+.badge-frei { background-color: #28a745; }       /* grün */
+.badge-belegt { background-color: #dc3545; }     /* rot */
+.badge-deaktiviert { background-color: #6c757d; }/* grau */
+
 .logout-button {
     position: absolute;
     top: 20px;
