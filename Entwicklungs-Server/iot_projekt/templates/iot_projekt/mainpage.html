@@ -49,7 +49,7 @@
             <summary class="arbeitsplatz-btn">{{ arbeitsplatz.name }}</summary>
 
             {% if arbeitsplatz.status == "frei" %}
-            <p>Status: Frei</p>
+            <p>Status: <span class="badge badge-frei">Frei</span></p>
             <form method="post" action="{% url 'arbeitsplatz_buchen' %}">
                 {% csrf_token %}
                 <label for="start">Belegen von:</label>
@@ -61,7 +61,7 @@
             </form>
 
             {% elif arbeitsplatz.status == "belegt" %}
-            <p>Status: Belegt</p>
+            <p>Status: <span class="badge badge-belegt">Belegt</span></p>
             <p>Benutzer: {{ arbeitsplatz.username }}</p>
             <p>Ort: {{ arbeitsplatz.ort }}</p>
 
@@ -79,7 +79,7 @@
             {% endif %}
 
             {% elif arbeitsplatz.status == "deaktiviert" %}
-            <p>Status: Deaktiviert</p>
+            <p>Status: <span class="badge badge-deaktiviert">Deaktiviert</span></p>
             <p>Dieser Platz ist aktuell nicht verfügbar.</p>
             {% endif %}
         </details>
