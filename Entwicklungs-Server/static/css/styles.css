@@ -65,6 +65,39 @@ body.mainpage {
 .badge-belegt { background-color: #dc3545; }     /* rot */
 .badge-deaktiviert { background-color: #6c757d; }/* grau */
 
+.lux-badge {
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-weight: bold;
+  display: inline-block;
+  transition: background-color 0.3s ease;
+}
+
+.lux-zu-dunkel {
+  background-color: black;
+  color: white;
+}
+
+.lux-normal {
+  background-color: #caf61c; /* gelb */
+  color: black;
+}
+
+.lux-zu-hell {
+  background-color: #dc3545; /* rot */
+  color: white;
+}
+
+.lux-ladeanzeige {
+    background-color: lightgray;
+    color: gray;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-weight: bold;
+    display: inline-block;
+    transition: background-color 0.3s ease;
+}
+
 .logout-button {
     position: absolute;
     top: 20px;
