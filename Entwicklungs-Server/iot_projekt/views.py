@@ -2,6 +2,7 @@ import json, csv
 import uuid
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
+from django.views.decorators.http import require_GET
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.mail import send_mail                                      #wird f�r Passwort zur�cksetzen ben�tigt
 from functools import wraps                                                 #wird f�r den Decorator ben�tigt
@@ -9,11 +10,50 @@ from django.views.decorators.cache import never_cache                       #ver
 from datetime import datetime
 from django.contrib import messages
 from django.views.decorators.http import require_GET
+from django.views.decorators.csrf import csrf_exempt
+
+
+
+try:
+    import RPi.GPIO as GPIO
+    RPI_AVAILABLE = True
+except ImportError:
+    RPI_AVAILABLE = False
+    # Dummy-Funktionen für Nicht-RPi-Umgebung
+    class GPIO:
+        BCM = None
+        OUT = None
+        HIGH = 1
+        LOW = 0
+
+        @staticmethod
+        def setmode(mode):
+            print("GPIO setmode mock")
+
+        @staticmethod
+        def setup(pin, mode):
+            print(f"GPIO setup mock: pin={pin}, mode={mode}")
+
+        @staticmethod
+        def output(pin, value):
+            print(f"GPIO output mock: pin={pin}, value={value}")
+
 
 #from .led_control import set_led_status
 #from .tageslichtsensor import start_sensor, stop_sensor, get_luxwert
 
+def set_led_status(*args, **kwargs):
+    print("ℹ️ [Mock] set_led_status wurde aufgerufen (Cloud-Umgebung)")
 
+def start_sensor(*args, **kwargs):
+    print("ℹ️ [Mock] start_sensor wurde aufgerufen (Cloud-Umgebung)")
+
+def stop_sensor(*args, **kwargs):
+    print("ℹ️ [Mock] stop_sensor wurde aufgerufen (Cloud-Umgebung)")
+
+def get_luxwert(arbeitsplatz_id):
+    print(f"ℹ️ [Mock] get_luxwert für {arbeitsplatz_id} – kein echter Sensor")
+    return "nicht verfügbar"
 
 # Pfad zu den JSON-Datenbanken
 
@@ -32,7 +72,11 @@ def login_required(view_func):
     return wrapper
     
 @never_cache
+@never_cache
 def registrieren(request):
+    sprache = request.session.get("sprache", "de")
+    template = 'iot_projekt/registrieren_englisch.html' if sprache == 'en' else 'iot_projekt/registrieren.html'
+
     if request.method == "POST":
         username = request.POST.get("username")
         email = request.POST.get("email")
@@ -60,10 +104,14 @@ def registrieren(request):
 
         return redirect("start")
 
-    return render(request, 'iot_projekt/registrieren.html')
+    return render(request, template)
+
     
 @never_cache
 def start(request):
+    sprache = request.session.get("sprache", "de")
+    template = 'iot_projekt/start_englisch.html' if sprache == 'en' else 'iot_projekt/start.html'
+
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("passwort")
@@ -73,15 +121,14 @@ def start(request):
 
         for user in data["users"]:
             if user["username"] == username and check_password(password, user["password"]):
-      
                 request.session["username"] = username
                 request.session["user_id"] = user["id"]
-
                 return redirect("hauptseite")
 
         return HttpResponse("Ihr Passwort oder Benutzername ist falsch, bitte erneut eingeben.")
 
-    return render(request, 'iot_projekt/start.html')
+    return render(request, template)
+
 
 
 @never_cache
@@ -113,6 +160,10 @@ def save_reset_tokens(tokens):
 
 
 def passwort_vergessen(request):
+    
+    sprache = request.session.get("sprache", "de")
+    template = 'iot_projekt/passwort_vergessen_englisch.html' if sprache == 'en' else 'iot_projekt/passwort_vergessen.html'
+    
     if request.method == "POST":
         email = request.POST.get("email")
 
@@ -140,12 +191,16 @@ def passwort_vergessen(request):
         
         return HttpResponse("E-Mail nicht gefunden.")
 
-    return render(request, 'iot_projekt/passwort_vergessen.html')
+    return render(request, template)
     
     
     
     
 def passwort_zuruecksetzen(request, token):
+    
+    sprache = request.session.get("sprache", "de")
+    template = 'iot_projekt/passwort_zuruecksetzen_englisch.html' if sprache == 'en' else 'iot_projekt/passwort_zuruecksetzen.html'
+    
     tokens = load_reset_tokens()
     username = tokens.get(token)
 
@@ -173,7 +228,13 @@ def passwort_zuruecksetzen(request, token):
 
         return HttpResponse("Passwort erfolgreich ge�ndert!")
 
-    return render(request, 'iot_projekt/passwort_zuruecksetzen.html', {"token": token})
+    return render(request, template, {"token": token})
+
+
+def sprache_wechseln(request, sprache):
+    if sprache in ["de", "en"]:
+        request.session["sprache"] = sprache
+    return redirect("hauptseite")
 
 
 
@@ -184,8 +245,16 @@ def hauptseite(request):
     if "username" not in request.session:
         return redirect("start")
 
+    sprache = request.session.get("sprache", "de")  # Standard: Deutsch
+
     with open(arbeitsplaetze, "r") as file:
         arbeitsplaetze_data = json.load(file)["arbeitsplaetze"]
+        
+    if sprache == "en":
+        for ap in arbeitsplaetze_data:
+            if "Arbeitsplatz" in ap["name"]:
+                nummer = ap["name"].split(" ")[-1]
+                ap["name"] = f"Desk 0{nummer}"
 
     with open(registrierte_benutzer, "r") as file:
         users = json.load(file)["users"]
@@ -193,17 +262,14 @@ def hauptseite(request):
     user_id = request.session.get("user_id")
     schreibtischhoehe = None
 
-    # Benutzer-ID → Benutzername abbilden
     user_map = {user["id"]: user["username"] for user in users}
 
     for arbeitsplatz in arbeitsplaetze_data:
         uid = arbeitsplatz.get("user_id")
 
-        # Benutzername ergänzen
         if uid:
             arbeitsplatz["username"] = user_map.get(uid, "Unbekannt")
 
-        # Ort ergänzen anhand der ID
         arbeitsplatz_id = arbeitsplatz.get("id", "").lower()
         if arbeitsplatz_id in ("desk-01", "desk-02"):
             arbeitsplatz["ort"] = "HVF Geb. 6"
@@ -216,18 +282,32 @@ def hauptseite(request):
         else:
             arbeitsplatz["ort"] = "Unbekannt"
 
-        # Schreibtischhöhe für den eingeloggten User berechnen
         if uid == user_id and schreibtischhoehe is None:
             for user in users:
                 if user["id"] == user_id:
                     schreibtischhoehe = berechne_schreibtischhoehe(user.get("koerpergroesse", 170))
                     break
-    return render(request, 'iot_projekt/mainpage.html', {
+
+        if "gpio_red" in arbeitsplatz and "gpio_green" in arbeitsplatz:
+            try:
+                set_led_status(
+                    arbeitsplatz["gpio_red"],
+                    arbeitsplatz["gpio_green"],
+                    arbeitsplatz["status"]
+                )
+            except Exception as e:
+                print(f"LED-Fehler für {arbeitsplatz['id']}: {e}")
+
+    # Sprachauswahl: Template abhängig von Session
+    template_name = 'iot_projekt/mainpage_englisch.html' if sprache == 'en' else 'iot_projekt/mainpage.html'
+
+    return render(request, template_name, {
         "arbeitsplaetze_list": arbeitsplaetze_data,
         "arbeitsplaetze_json": json.dumps(arbeitsplaetze_data),
         "user_id": user_id,
         "schreibtischhoehe": schreibtischhoehe
     })
+
 
 
 
@@ -281,10 +361,10 @@ def arbeitsplatz_buchen(request):
                 arbeitsplatz["startzeit"] = start
                 arbeitsplatz["endzeit"] = ende
 
-                #if "luxsensor" in arbeitsplatz:
-                    #sensor_info = arbeitsplatz["luxsensor"]
-                    #start_sensor(arbeitsplatz["id"], sensor_info["i2c_bus"], sensor_info["i2c_address"])
-                #break
+                if "luxsensor" in arbeitsplatz:
+                    sensor_info = arbeitsplatz["luxsensor"]
+                    start_sensor(arbeitsplatz["id"], sensor_info["i2c_bus"], sensor_info["i2c_address"])
+                break
 
 
         with open(arbeitsplaetze, "w") as datei:
@@ -310,14 +390,12 @@ def arbeitsplatz_abmelden(request):
             arbeitsplatz["status"] = "frei"
             arbeitsplatz["user_id"] = None
             desk_id = arbeitsplatz["id"]
-            startzeit = arbeitsplatz.get("startzeit")
-            endzeit = arbeitsplatz.get("endzeit")
-            arbeitsplatz.pop("startzeit", None)
-            arbeitsplatz.pop("endzeit", None)
+            startzeit = arbeitsplatz.pop("startzeit", None)
+            endzeit = arbeitsplatz.pop("endzeit", None)
 
             if "luxsensor" in arbeitsplatz:
                 stop_sensor(arbeitsplatz["id"])
-            break  
+            break
 
     if desk_id and startzeit and endzeit:
         try:
@@ -325,18 +403,20 @@ def arbeitsplatz_abmelden(request):
             end_dt = datetime.strptime(endzeit, "%Y-%m-%dT%H:%M")
             dauer = int((end_dt - start_dt).total_seconds() / 60)
         except Exception:
+            start_dt = end_dt = None
             dauer = 0
-            start_dt = None
-            end_dt = None
 
         try:
             with open(rechnungsbelege, "r") as f:
                 belege = json.load(f)
+                if not isinstance(belege, dict):
+                    belege = {}
         except (FileNotFoundError, json.JSONDecodeError):
-            belege = {"buchungen": []}
+            belege = {}
 
+        buchungen = belege.get("buchungen", [])
         if start_dt and end_dt:
-            belege["buchungen"].append({
+            buchungen.append({
                 "id": str(uuid.uuid4()),
                 "benutzer": request.session.get("username"),
                 "arbeitsplatz_id": desk_id,
@@ -344,17 +424,12 @@ def arbeitsplatz_abmelden(request):
                 "endzeit": end_dt.strftime("%Y-%m-%d %H:%M"),
                 "dauer_minuten": dauer
             })
+            belege["buchungen"] = buchungen
 
             with open(rechnungsbelege, "w") as f:
                 json.dump(belege, f, indent=4)
 
-    # Konvertiere datetime-Objekte in allen Arbeitsplätzen zu Strings
-    for arbeitsplatz in daten["arbeitsplaetze"]:
-        if type(arbeitsplatz.get("startzeit")) == datetime:
-            arbeitsplatz["startzeit"] = arbeitsplatz["startzeit"].strftime("%Y-%m-%dT%H:%M")
-        if type(arbeitsplatz.get("endzeit")) == datetime:
-            arbeitsplatz["endzeit"] = arbeitsplatz["endzeit"].strftime("%Y-%m-%dT%H:%M")
-
+    # Speicher aktualisierte Arbeitsplätze
     with open(arbeitsplaetze, "w") as f:
         json.dump(daten, f, indent=4)
 
@@ -365,8 +440,13 @@ def arbeitsplatz_abmelden(request):
  
 # Funktion für die Ablegung der Rechnungen im Profil
 
+@never_cache
 @login_required
 def buchungsuebersicht(request):
+    
+    sprache = request.session.get("sprache", "de")
+    template = 'iot_projekt/buchungsuebersicht_englisch.html' if sprache == 'en' else 'iot_projekt/buchungsuebersicht.html'
+    
     username = request.session.get("username")
     buchungen = []
 
@@ -379,7 +459,7 @@ def buchungsuebersicht(request):
     except FileNotFoundError:
         pass
 
-    return render(request, "iot_projekt/buchungsuebersicht.html", {"buchungen": buchungen})
+    return render(request, template, {"buchungen": buchungen})
 
 # Funktion als CSV-Download
 
@@ -437,6 +517,10 @@ def download_als_csv(request):
 
 @login_required
 def passwort_aendern(request):
+    
+    sprache = request.session.get("sprache", "de")
+    template = 'iot_projekt/passwort_aendern_englisch.html' if sprache == 'en' else 'iot_projekt/passwort_aendern.html'
+    
     if request.method == "POST":
         pass1 = request.POST.get("passwort1")
         pass2 = request.POST.get("passwort2")
@@ -461,7 +545,7 @@ def passwort_aendern(request):
         messages.success(request, "Passwort erfolgreich geändert.")
         return redirect("hauptseite")
 
-    return render(request, "iot_projekt/passwort_aendern.html")
+    return render(request, template)
 
 
 
@@ -504,5 +588,30 @@ def profil_loeschen(request):
     request.session.flush()
     return redirect("start")
 
+
+#Und hier kommt das Wichtigste, unser REST-API, als Verbindung zwischen BW-Cloud-Server und Raspi
+
+
+@csrf_exempt
+def get_status_for_raspi(request):
+    desk_id = request.GET.get("id")
+    
+    if not desk_id:
+        return JsonResponse({"error": "Fehlende ID"}, status=400)
+
+    try:
+        with open(arbeitsplaetze, "r") as file:
+            daten = json.load(file)
+    except Exception as e:
+        return JsonResponse({"error": "Dateifehler: " + str(e)}, status=500)
+
+    for ap in daten.get("arbeitsplaetze", []):
+        if ap.get("id") == desk_id:
+            return JsonResponse({
+                "status": ap.get("status"),
+                "user_id": ap.get("user_id")
+            })
+
+    return JsonResponse({"error": "Arbeitsplatz nicht gefunden"}, status=404)
 
 
