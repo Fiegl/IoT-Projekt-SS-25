@@ -17,6 +17,11 @@
 
 <body class="mainpage">
 
+    <div style="position: absolute; top: 10px; right: 10px;">
+        <a href="{% url 'sprache_wechseln' 'de' %}"><img src="{% static 'css/flagge_deutsch.png' %}" width="30" alt="Deutsch"></a>
+        <a href="{% url 'sprache_wechseln' 'en' %}"><img src="{% static 'css/Flagge_Großbritannien.jpeg' %}" width="30" alt="English"></a>
+    </div>
+
     <div id="map"></div>
 
     <form action="{% url 'logout' %}" method="post" class="logout-form">

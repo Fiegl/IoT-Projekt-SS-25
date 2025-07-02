@@ -34,12 +34,12 @@
     <form method="POST">
         {% csrf_token %}
         <div class="container">
-            <h2>Passwort ändern</h2>
-            <label for="passwort1">Neues Passwort</label><br>
+            <h2>Change Password</h2>
+            <label for="passwort1">New Password</label><br>
             <input type="password" name="passwort1" required><br><br>
-            <label for="passwort2">Neues Passwort wiederholen</label><br>
+            <label for="passwort2">Repeat New Password</label><br>
             <input type="password" name="passwort2" required><br><br>
-            <button type="submit">Neues Passwort speichern</button>
+            <button type="submit">Back</button>
             <button type="button" onclick="history.back()">Zurück</button>
         </div>
     </form>

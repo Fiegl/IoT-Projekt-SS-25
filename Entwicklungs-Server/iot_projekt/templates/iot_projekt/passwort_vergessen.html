@@ -1,0 +1,15 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head><title>Passwort vergessen</title></head>
+<body>
+    <h2>Passwort vergessen?</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="email">E-Mail-Adresse:</label><br>
+        <input type="email" name="email" required><br><br>
+        <button type="submit">Link zusenden</button>
+    </form>
+    <a href="{% url 'start' %}">Zurück zur Anmeldung</a>
+</body>
+</html>
