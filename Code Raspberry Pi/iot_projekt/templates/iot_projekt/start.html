@@ -19,6 +19,12 @@
 </head>
 
 <body class="start">
+
+    <div style="position: absolute; top: 10px; right: 10px;">
+        <a href="{% url 'sprache_wechseln' 'de' %}"><img src="{% static 'css/flagge_deutsch.png' %}" width="30" alt="Deutsch"></a>
+        <a href="{% url 'sprache_wechseln' 'en' %}"><img src="{% static 'css/Flagge_Großbritannien.jpeg' %}" width="30" alt="English"></a>
+    </div>
+
     <img src="{% static 'css/desksharelock.jpg' %}" alt="Logo" id="desksharelock">
     <h1>Desk-Share-Lock</h1>
     <form method="POST">
@@ -31,7 +37,8 @@
             <input type="password" name="passwort"></input><br><br>
             <button type="submit">Einloggen</button>
             <p>Noch nicht registriert?</p>
-            <a href="{% url 'registrieren' %}">Hier registrieren!</a>
+            <a href="{% url 'registrieren' %}">Hier registrieren!</a><br><br>
+            <a href="{% url 'passwort_vergessen' %}">Passwort vergessen?</a>
         </div>
     </form>
 </body>

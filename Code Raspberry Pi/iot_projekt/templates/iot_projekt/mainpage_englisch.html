@@ -1,0 +1,209 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Desk-Share-Lock</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <script
+        src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.1/mapbox-gl-directions.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.1/mapbox-gl-directions.css"
+        rel="stylesheet" />
+</head>
+
+<body class="mainpage">
+
+    <div style="position: absolute; top: 10px; right: 10px;">
+        <a href="{% url 'sprache_wechseln' 'de' %}"><img src="{% static 'css/flagge_deutsch.png' %}" width="30" alt="Deutsch"></a>
+        <a href="{% url 'sprache_wechseln' 'en' %}"><img src="{% static 'css/Flagge_Großbritannien.jpeg' %}" width="30" alt="English"></a>
+    </div>
+
+    <div id="map"></div>
+
+    <form action="{% url 'logout' %}" method="post" class="logout-form">
+        {% csrf_token %}
+        <button type="submit" class="logout-button">Log out</button>
+    </form>
+
+    <img src="{% static 'css/desksharelock.jpg' %}" alt="Logo" id="desksharelock">
+    <h1>Desk-Share-Lock</h1><br>
+
+    {% if request.session.username %}
+    <header>
+        <div class="dropdown">
+            <div class="hamburger" onclick="toggleDropdown()">&#9776;</div>
+            <div class="dropdown-content" id="dropdownContent">
+                <a href="{% url 'buchungsuebersicht' %}">Booking Overview</a>
+                <a href="{% url 'passwort_aendern' %}">Change Password</a>
+                <a href="{% url 'profil_loeschen' %}">Delete Profile</a>
+            </div>
+        </div>
+    </header>
+    {% endif %}
+    <br>
+
+    <h3>Select an available desk</h3>
+
+    <div class="arbeitsplatz-container">
+        {% for arbeitsplatz in arbeitsplaetze_list %}
+        <details class="arbeitsplatz-details" id="arbeitsplatz-{{ arbeitsplatz.id }}">
+            <summary class="arbeitsplatz-btn">{{ arbeitsplatz.name }}</summary>
+
+            {% if arbeitsplatz.status == "frei" %}
+            <p>Status: <span class="badge badge-frei">Available</span></p>
+            <form method="post" action="{% url 'arbeitsplatz_buchen' %}">
+                {% csrf_token %}
+                <label for="start">Book from:</label>
+                <input type="datetime-local" name="start_datetime" required><br>
+                <label for="ende">Book to:</label>
+                <input type="datetime-local" name="ende_datetime" required>
+                <input type="hidden" name="desk_id" value="{{ arbeitsplatz.id }}"><br>
+                <button type="submit">Book</button>
+            </form>
+
+            {% elif arbeitsplatz.status == "belegt" %}
+            <p>Status: <span class="badge badge-belegt">Occupied</span></p>
+            <p>User: {{ arbeitsplatz.username }}</p>
+            <p>Location: {{ arbeitsplatz.ort }}</p>
+
+            {% if arbeitsplatz.user_id == user_id %}
+            <p id="luxwert-{{ arbeitsplatz.id }}" class="lux-anzeige">Luxwert: <span class="lux-ladeanzeige">is
+                    loading...</span></p>
+
+            <form method="post" action="{% url 'arbeitsplatz_abmelden' %}">
+                {% csrf_token %}
+                <input type="hidden" name="desk_id" value="{{ arbeitsplatz.id }}">
+                {% if schreibtischhoehe %}
+                <p>Your recommended desk height: {{ schreibtischhoehe }} cm</p>
+                {% endif %}
+                <button type="submit">Release</button>
+            </form>
+            {% endif %}
+
+            {% elif arbeitsplatz.status == "deaktiviert" %}
+            <p>Status: <span class="badge badge-deaktiviert">Disabled</span></p>
+            <p>This desk is currently unavailable.</p>
+            {% endif %}
+        </details>
+        {% endfor %}
+    </div>
+
+    <script>
+        const userId = "{{ user_id }}";
+        const arbeitsplaetze = JSON.parse('{{ arbeitsplaetze_json|safe|escapejs }}');
+
+        const ziele = {
+            "desk-01": [9.18358, 48.90730],
+            "desk-02": [9.18358, 48.90730],
+            "desk-03": [9.18193, 48.89312],
+            "desk-04": [9.18193, 48.89312],
+            "desk-05": [9.16921, 48.89210],
+            "desk-06": [9.16921, 48.89210],
+            "desk-07": [9.16651, 48.78209],
+            "desk-08": [9.16651, 48.78209],
+        };
+
+        mapboxgl.accessToken = 'pk.eyJ1Ijoic29sZGllcmJveSIsImEiOiJjbWJ4cHZ1czMxM3U4MmxzOGhzcjJtYnByIn0.rONE98g2NxMNnpxWUD5P7w';
+
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: [9.18, 48.89],
+            zoom: 12
+        });
+
+        const directions = new MapboxDirections({
+            accessToken: mapboxgl.accessToken,
+            controls: {
+                instructions: false
+            }
+        });
+
+        map.addControl(directions, 'top-left');
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const eigenerPlatz = arbeitsplaetze.find(p => p.user_id === userId && p.status === "belegt");
+
+            if (eigenerPlatz && ziele[eigenerPlatz.id]) {
+                const zielKoord = ziele[eigenerPlatz.id];
+                directions.setDestination(zielKoord);
+
+                // Marker anzeigen
+                const marker = new mapboxgl.Marker({ color: 'red' })
+                    .setLngLat(zielKoord)
+                    .addTo(map);
+
+                // Adresse per Reverse Geocoding abrufen und als Popup anzeigen
+                zeigeAdresse(zielKoord[0], zielKoord[1], marker);
+            }
+
+            // Lux-Abfrage bei belegtem Platz
+            for (const platz of arbeitsplaetze) {
+                if (platz.user_id === userId && platz.status === "belegt") {
+                    starteLuxAbfrage(platz.id);
+                }
+            }
+        });
+
+        function zeigeAdresse(lng, lat, marker) {
+            const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    const ort = data.features[0]?.place_name || `${lat}, ${lng}`;
+                    const popup = new mapboxgl.Popup().setHTML(`<strong>Ziel:</strong><br>${ort}`);
+                    marker.setPopup(popup).togglePopup();
+                })
+                .catch(err => console.error("Geocoding Fehler:", err));
+        }
+
+        function starteLuxAbfrage(deskId) {
+            setInterval(() => {
+                fetch(`/luxwert/?desk_id=${deskId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const anzeige = document.getElementById("luxwert-" + deskId);
+                        if (anzeige) {
+                            if (typeof data.lux === "string") {
+                                anzeige.innerText = data.lux;
+                            } else {
+                                anzeige.innerText = "Luxwert: " + data.lux + " Lux";
+                            }
+                            anzeige.classList.remove("lux-ladeanzeige", "lux-zu-dunkel", "lux-normal", "lux-zu-hell");
+                            anzeige.classList.add("lux-badge");
+
+                            // Klassenzuweisung basierend auf Wert
+                            if (typeof data.lux === "number") {
+                                if (data.lux < 200) {
+                                    anzeige.classList.add("lux-zu-dunkel");
+                                } else if (data.lux > 800) {
+                                    anzeige.classList.add("lux-zu-hell");
+                                } else {
+                                    anzeige.classList.add("lux-normal");
+                                }
+                            } else {
+                                // Falls es kein Zahlenwert ist (z. B. Fehlertext)
+                                anzeige.classList.add("lux-zu-dunkel");
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Luxwert-Fehler:", error);
+                    });
+            }, 10000);
+        }
+
+        function toggleDropdown() {
+            const content = document.getElementById("dropdownContent");
+            content.style.display = content.style.display === "block" ? "none" : "block";
+        }
+    </script>
+
+</body>
+
+</html>

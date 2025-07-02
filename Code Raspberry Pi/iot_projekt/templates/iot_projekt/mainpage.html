@@ -17,6 +17,11 @@
 
 <body class="mainpage">
 
+    <div style="position: absolute; top: 10px; right: 10px;">
+        <a href="{% url 'sprache_wechseln' 'de' %}"><img src="{% static 'css/flagge_deutsch.png' %}" width="30" alt="Deutsch"></a>
+        <a href="{% url 'sprache_wechseln' 'en' %}"><img src="{% static 'css/Flagge_Großbritannien.jpeg' %}" width="30" alt="English"></a>
+    </div>
+
     <div id="map"></div>
 
     <form action="{% url 'logout' %}" method="post" class="logout-form">
@@ -49,7 +54,7 @@
             <summary class="arbeitsplatz-btn">{{ arbeitsplatz.name }}</summary>
 
             {% if arbeitsplatz.status == "frei" %}
-            <p>Status: Frei</p>
+            <p>Status: <span class="badge badge-frei">Frei</span></p>
             <form method="post" action="{% url 'arbeitsplatz_buchen' %}">
                 {% csrf_token %}
                 <label for="start">Belegen von:</label>
@@ -61,12 +66,12 @@
             </form>
 
             {% elif arbeitsplatz.status == "belegt" %}
-            <p>Status: Belegt</p>
+            <p>Status: <span class="badge badge-belegt">Belegt</span></p>
             <p>Benutzer: {{ arbeitsplatz.username }}</p>
             <p>Ort: {{ arbeitsplatz.ort }}</p>
 
             {% if arbeitsplatz.user_id == user_id %}
-            <p id="luxwert-{{ arbeitsplatz.id }}" class="lux-anzeige">Luxwert: wird geladen...</p>
+            <p id="luxwert-{{ arbeitsplatz.id }}" class="lux-anzeige">Luxwert: <span class="lux-ladeanzeige">wird geladen...</span></p>
 
             <form method="post" action="{% url 'arbeitsplatz_abmelden' %}">
                 {% csrf_token %}
@@ -79,7 +84,7 @@
             {% endif %}
 
             {% elif arbeitsplatz.status == "deaktiviert" %}
-            <p>Status: Deaktiviert</p>
+            <p>Status: <span class="badge badge-deaktiviert">Deaktiviert</span></p>
             <p>Dieser Platz ist aktuell nicht verfügbar.</p>
             {% endif %}
         </details>
@@ -167,6 +172,22 @@
                                 anzeige.innerText = data.lux;
                             } else {
                                 anzeige.innerText = "Luxwert: " + data.lux + " Lux";
+                            }
+                            anzeige.classList.remove("lux-ladeanzeige", "lux-zu-dunkel", "lux-normal", "lux-zu-hell");
+                            anzeige.classList.add("lux-badge");
+
+                            // Klassenzuweisung basierend auf Wert
+                            if (typeof data.lux === "number") {
+                                if (data.lux < 200) {
+                                    anzeige.classList.add("lux-zu-dunkel");
+                                } else if (data.lux > 800) {
+                                    anzeige.classList.add("lux-zu-hell");
+                                } else {
+                                    anzeige.classList.add("lux-normal");
+                                }
+                            } else {
+                                // Falls es kein Zahlenwert ist (z. B. Fehlertext)
+                                anzeige.classList.add("lux-zu-dunkel");
                             }
                         }
                     })
