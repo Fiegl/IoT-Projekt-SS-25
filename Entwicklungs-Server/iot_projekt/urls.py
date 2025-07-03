@@ -14,9 +14,8 @@ urlpatterns = [
     path('passwort_aendern', views.passwort_aendern, name='passwort_aendern'),
     path("profil_loeschen/", views.profil_loeschen, name="profil_loeschen"),
     path('download_als_csv/', views.download_als_csv, name='download_als_csv'),
-    path("luxwert/", views.luxwert_aktuell, name="luxwert"),
     path("sprache/<str:sprache>/", views.sprache_wechseln, name="sprache_wechseln"),
-    path('api/status/', views.get_status_for_raspi, name='status_api'),
+    path("arbeitsplaetze_api/", views.arbeitsplaetze_api, name="arbeitsplaetze_api"),
+    path('luxwert-empfangen/', views.luxwert_empfangen, name='luxwert_empfangen'),
+    path("luxwert/", views.luxwert_abfragen, name="luxwert_abfragen"),
 ]
-
-
