@@ -519,19 +519,6 @@ def arbeitsplaetze_api(request):
     with open("/var/www/django-project/datenbank/arbeitsplaetze.json", "r") as f:
         daten = json.load(f)
     return JsonResponse(daten)
-
-
-def sende_luxwert(arbeitsplatz_id, lux):
-    url = "http://<IP-ODER-DOMAIN-DEINES-WEBSERVERS>/luxwert-empfangen/"
-    try:
-        res = requests.post(url, json={"desk_id": arbeitsplatz_id, "lux": lux})
-        if res.status_code == 200:
-            print(f"[{arbeitsplatz_id}] Luxwert gesendet: {lux}")
-        else:
-            print(f"[{arbeitsplatz_id}] Fehler beim Senden: {res.status_code} – {res.text}")
-    except Exception as e:
-        print(f"[{arbeitsplatz_id}] Verbindungsfehler: {e}")
-        
         
         
 @csrf_exempt
