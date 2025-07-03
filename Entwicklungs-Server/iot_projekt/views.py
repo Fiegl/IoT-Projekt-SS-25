@@ -1,4 +1,5 @@
 import json, csv
+import os
 import uuid
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
@@ -11,49 +12,10 @@ from datetime import datetime
 from django.contrib import messages
 from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
 
 
-try:
-    import RPi.GPIO as GPIO
-    RPI_AVAILABLE = True
-except ImportError:
-    RPI_AVAILABLE = False
-    # Dummy-Funktionen für Nicht-RPi-Umgebung
-    class GPIO:
-        BCM = None
-        OUT = None
-        HIGH = 1
-        LOW = 0
-
-        @staticmethod
-        def setmode(mode):
-            print("GPIO setmode mock")
-
-        @staticmethod
-        def setup(pin, mode):
-            print(f"GPIO setup mock: pin={pin}, mode={mode}")
-
-        @staticmethod
-        def output(pin, value):
-            print(f"GPIO output mock: pin={pin}, value={value}")
-
-
-#from .led_control import set_led_status
-#from .tageslichtsensor import start_sensor, stop_sensor, get_luxwert
-
-def set_led_status(*args, **kwargs):
-    print("ℹ️ [Mock] set_led_status wurde aufgerufen (Cloud-Umgebung)")
-
-def start_sensor(*args, **kwargs):
-    print("ℹ️ [Mock] start_sensor wurde aufgerufen (Cloud-Umgebung)")
-
-def stop_sensor(*args, **kwargs):
-    print("ℹ️ [Mock] stop_sensor wurde aufgerufen (Cloud-Umgebung)")
-
-def get_luxwert(arbeitsplatz_id):
-    print(f"ℹ️ [Mock] get_luxwert für {arbeitsplatz_id} – kein echter Sensor")
-    return "nicht verfügbar"
 
 # Pfad zu den JSON-Datenbanken
 
@@ -71,7 +33,6 @@ def login_required(view_func):
         return view_func(request, *args, **kwargs)
     return wrapper
     
-@never_cache
 @never_cache
 def registrieren(request):
     sprache = request.session.get("sprache", "de")
@@ -288,16 +249,6 @@ def hauptseite(request):
                     schreibtischhoehe = berechne_schreibtischhoehe(user.get("koerpergroesse", 170))
                     break
 
-        if "gpio_red" in arbeitsplatz and "gpio_green" in arbeitsplatz:
-            try:
-                set_led_status(
-                    arbeitsplatz["gpio_red"],
-                    arbeitsplatz["gpio_green"],
-                    arbeitsplatz["status"]
-                )
-            except Exception as e:
-                print(f"LED-Fehler für {arbeitsplatz['id']}: {e}")
-
     # Sprachauswahl: Template abhängig von Session
     template_name = 'iot_projekt/mainpage_englisch.html' if sprache == 'en' else 'iot_projekt/mainpage.html'
 
@@ -307,26 +258,6 @@ def hauptseite(request):
         "user_id": user_id,
         "schreibtischhoehe": schreibtischhoehe
     })
-
-
-
-
-
-@require_GET                #hier haben wir ein REST-API:-)
-@login_required
-def luxwert_aktuell(request):
-    user_id = request.session.get("user_id")
-
-    with open(arbeitsplaetze, "r") as file:
-        daten = json.load(file)
-
-    for ap in daten["arbeitsplaetze"]:
-        if ap.get("user_id") == user_id and ap.get("status") == "belegt":
-            ap_id = ap["id"]
-            lux = get_luxwert(ap_id)
-            return JsonResponse({"lux": lux})
-
-    return JsonResponse({"lux": "kein Sensor angeschlossen"})
 
 
 
@@ -361,11 +292,6 @@ def arbeitsplatz_buchen(request):
                 arbeitsplatz["startzeit"] = start
                 arbeitsplatz["endzeit"] = ende
 
-                if "luxsensor" in arbeitsplatz:
-                    sensor_info = arbeitsplatz["luxsensor"]
-                    start_sensor(arbeitsplatz["id"], sensor_info["i2c_bus"], sensor_info["i2c_address"])
-                break
-
 
         with open(arbeitsplaetze, "w") as datei:
             json.dump(daten, datei, indent=4)
@@ -393,9 +319,6 @@ def arbeitsplatz_abmelden(request):
             startzeit = arbeitsplatz.pop("startzeit", None)
             endzeit = arbeitsplatz.pop("endzeit", None)
 
-            if "luxsensor" in arbeitsplatz:
-                stop_sensor(arbeitsplatz["id"])
-            break
 
     if desk_id and startzeit and endzeit:
         try:
@@ -466,8 +389,6 @@ def buchungsuebersicht(request):
 @never_cache
 @login_required
 def download_als_csv(request):
-    import csv
-    from django.http import HttpResponse
 
     buchung_id = request.GET.get("buchung_id")
     username = request.session.get("username")
@@ -589,29 +510,78 @@ def profil_loeschen(request):
     return redirect("start")
 
 
-#Und hier kommt das Wichtigste, unser REST-API, als Verbindung zwischen BW-Cloud-Server und Raspi
+
+#Ab hier kommen Funktionen, damit der Raspi unsere Webseite ansteuern kann (IPV6: [2001:7c0:2320:2:f816:3eff:fef8:f5b9]:8000/)
+
+@require_GET
+@csrf_exempt 
+def arbeitsplaetze_api(request):
+    with open("/var/www/django-project/datenbank/arbeitsplaetze.json", "r") as f:
+        daten = json.load(f)
+    return JsonResponse(daten)
 
 
+def sende_luxwert(arbeitsplatz_id, lux):
+    url = "http://<IP-ODER-DOMAIN-DEINES-WEBSERVERS>/luxwert-empfangen/"
+    try:
+        res = requests.post(url, json={"desk_id": arbeitsplatz_id, "lux": lux})
+        if res.status_code == 200:
+            print(f"[{arbeitsplatz_id}] Luxwert gesendet: {lux}")
+        else:
+            print(f"[{arbeitsplatz_id}] Fehler beim Senden: {res.status_code} – {res.text}")
+    except Exception as e:
+        print(f"[{arbeitsplatz_id}] Verbindungsfehler: {e}")
+        
+        
+        
 @csrf_exempt
-def get_status_for_raspi(request):
-    desk_id = request.GET.get("id")
+@require_POST
+def luxwert_empfangen(request):
+    try:
+        daten = json.loads(request.body)
+        desk_id = daten.get("desk_id")
+        luxwert = daten.get("lux")
+
+        if not desk_id or luxwert is None:
+            return JsonResponse({"error": "Ungültige Daten"}, status=400)
+
+        # JSON-Datei einlesen
+        with open(arbeitsplaetze, "r") as f:
+            daten = json.load(f)
+
+        aktualisiert = False
+        for ap in daten["arbeitsplaetze"]:
+            if ap["id"] == desk_id:
+                ap["lux"] = luxwert
+                aktualisiert = True
+                break
+
+        if aktualisiert:
+            with open(arbeitsplaetze, "w") as f:
+                json.dump(daten, f, indent=4)
+            return JsonResponse({"status": "OK", "lux": luxwert})
+        else:
+            return JsonResponse({"error": "Arbeitsplatz nicht gefunden"}, status=404)
+
+    except Exception as e:
+        print("Fehler beim Empfangen des Luxwerts:", e)
+        return JsonResponse({"error": str(e)}, status=500)
     
+    
+@require_GET
+def luxwert_abfragen(request):
+    desk_id = request.GET.get("desk_id")
     if not desk_id:
-        return JsonResponse({"error": "Fehlende ID"}, status=400)
+        return JsonResponse({"error": "Kein desk_id angegeben"}, status=400)
 
     try:
-        with open(arbeitsplaetze, "r") as file:
-            daten = json.load(file)
+        with open(arbeitsplaetze, "r") as f:
+            daten = json.load(f)
+            for ap in daten["arbeitsplaetze"]:
+                if ap["id"] == desk_id:
+                    return JsonResponse({"lux": ap.get("lux", "Kein Wert")})
+        return JsonResponse({"error": "Arbeitsplatz nicht gefunden"}, status=404)
     except Exception as e:
-        return JsonResponse({"error": "Dateifehler: " + str(e)}, status=500)
-
-    for ap in daten.get("arbeitsplaetze", []):
-        if ap.get("id") == desk_id:
-            return JsonResponse({
-                "status": ap.get("status"),
-                "user_id": ap.get("user_id")
-            })
-
-    return JsonResponse({"error": "Arbeitsplatz nicht gefunden"}, status=404)
+        return JsonResponse({"error": str(e)}, status=500)
 
 
