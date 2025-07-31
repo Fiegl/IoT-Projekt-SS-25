@@ -10,7 +10,6 @@ from functools import wraps                                                 #wir
 from django.views.decorators.cache import never_cache                       #verhindert den Cache
 from datetime import datetime
 from django.contrib import messages
-from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
