@@ -1,7 +1,8 @@
 import requests
 import time
 
-API_URL = "http://[2001:7c0:2320:2:f816:3eff:fef8:f5b9]:8000/api/status/get/"
+API_URL = "http://[2001:7c0:2320:2:f816:3eff:fef8:f5b9]:8000/arbeitsplaetze_api/"
+
 
 while True:
     try:
